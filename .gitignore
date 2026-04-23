@@ -16,3 +16,8 @@ shim-perm/
 voice-extract/output/
 voice-extract-backend/output/
 
+.env
+.venv/
+__pycache__/
+*.pyc
+output/
