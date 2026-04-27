@@ -10786,6 +10786,37 @@
       letter-spacing: 0;
       font-variant-numeric: tabular-nums;
     }
+    .ch-bulkbar {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 0 0 14px;
+      padding: 10px 12px;
+      background: linear-gradient(135deg, rgba(167,139,250,0.10), rgba(34,211,238,0.045));
+      border: 1px solid rgba(167,139,250,0.24);
+      border-radius: 10px;
+    }
+    .ch-bulkbar.active { display: flex; }
+    .ch-bulk-title {
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 900;
+      margin-right: auto;
+      font-variant-numeric: tabular-nums;
+    }
+    .ch-select-box {
+      width: 18px;
+      height: 18px;
+      border-radius: 5px;
+      accent-color: var(--accent);
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .bible-card.selected {
+      border-color: rgba(167,139,250,0.62);
+      box-shadow: 0 0 0 2px rgba(167,139,250,0.16), 0 14px 34px -14px rgba(167,139,250,0.36);
+    }
     .ch-card-topline {
       display: flex;
       gap: 6px;
@@ -10866,6 +10897,64 @@
       display: block;
       color: var(--text);
       margin-bottom: 3px;
+    }
+    .ch-rel-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 10px;
+    }
+    .ch-rel-card {
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg-1);
+    }
+    .ch-rel-title {
+      color: var(--text);
+      font-weight: 800;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+    .ch-rel-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .ch-rel-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 9px;
+      border-radius: 7px;
+      background: rgba(255,255,255,0.035);
+      color: var(--text-dim);
+      font-size: 12px;
+    }
+    .ch-rel-item strong { color: var(--text); }
+    .ch-rel-type {
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(167,139,250,0.12);
+      color: var(--accent);
+      font-size: 10px;
+      font-weight: 800;
+    }
+    .ch-rel-form {
+      display: grid;
+      grid-template-columns: 1fr 130px;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .ch-rel-form textarea {
+      grid-column: 1 / -1;
+      min-height: 54px;
+    }
+    .ch-rel-row-actions {
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
+      grid-column: 1 / -1;
     }
     @media (max-width: 980px) {
       .ch-workbench { grid-template-columns: 1fr; }
@@ -15869,6 +15958,8 @@
         <div class="ch-actions">
           <button class="ch-action-btn primary" id="ch-add-btn">＋ 새 캐릭터</button>
           <button class="ch-action-btn" id="ch-random-btn">🎲 랜덤 생성</button>
+          <button class="ch-action-btn" id="ch-pack-btn">Prompt Pack 복사</button>
+          <button class="ch-action-btn" id="ch-relmap-btn">관계 맵</button>
           <button class="ch-action-btn" id="ch-export-btn">Export JSON</button>
           <button class="ch-action-btn" id="ch-import-btn">Import JSON</button>
           <input id="ch-import-input" type="file" accept="application/json,.json" hidden />
@@ -15876,6 +15967,7 @@
       </div>
       <div id="ch-metrics" class="ch-metrics"></div>
       <span id="ch-stats" class="ch-quota-bar"></span>
+      <div id="ch-bulkbar" class="ch-bulkbar"></div>
       <div class="bible-grid" id="ch-grid"></div>
     </section>
 
@@ -33691,6 +33783,7 @@ function bindPipelinePage() {
       ttsSettings: data.ttsSettings || { stability: 0.5, similarity: 0.8, style: 0.0 },
       promptFragment: data.promptFragment || '',
       tags: data.tags || [],
+      relations: Array.isArray(data.relations) ? data.relations : [],
       createdAt: _now(), updatedAt: _now(), archived: false,
     };
     await SoavizDB.db.characters.put(rec);
@@ -33838,7 +33931,8 @@ function bindPipelinePage() {
   };
 })();
 
-const CHARACTER_PAGE_STATE = { search: '', role: 'all', ready: 'all' };
+const CHARACTER_PAGE_STATE = { search: '', role: 'all', ready: 'all', selected: new Set() };
+const CHARACTER_PENDING_DRAFT_KEY = 'soaviz.pending.characterDraft.v1';
 
 function getCharacterReadiness(c = {}) {
   const checks = [
@@ -33891,6 +33985,34 @@ function _safeCharacterFilename(s) {
   return String(s || 'characters').replace(/[^\w가-힣\-]+/g, '_').slice(0, 60) || 'characters';
 }
 
+function renderCharacterBulkbar() {
+  const bar = $('#ch-bulkbar');
+  if (!bar) return;
+  const count = CHARACTER_PAGE_STATE.selected.size;
+  bar.classList.toggle('active', count > 0);
+  if (!count) { bar.innerHTML = ''; return; }
+  bar.innerHTML = `
+    <div class="ch-bulk-title">선택 ${count}명</div>
+    <button class="ch-action-btn" data-ch-bulk="copy">Cast Pack 복사</button>
+    <button class="ch-action-btn" data-ch-bulk="assign">Shot에 일괄 연결</button>
+    <button class="ch-action-btn" data-ch-bulk="fragment">Fragment 자동정리</button>
+    <button class="ch-action-btn" data-ch-bulk="export">선택 Export</button>
+    <button class="ch-action-btn danger" data-ch-bulk="clear">선택 해제</button>
+  `;
+}
+
+async function getFilteredCharactersForPage() {
+  await SoavizDB?.ready;
+  const projectId = $('#ch-project-select')?.value || null;
+  const rawList = await SoavizCharacters.list(projectId);
+  const q = CHARACTER_PAGE_STATE.search.trim().toLowerCase();
+  return {
+    projectId,
+    rawList,
+    list: rawList.filter(c => _characterMatchesState(c, q)),
+  };
+}
+
 async function renderCharactersPage() {
   if (typeof SoavizCharacters === 'undefined') return;
   await SoavizDB?.ready;
@@ -33917,10 +34039,7 @@ async function renderCharactersPage() {
   const readyFilter = $('#ch-ready-filter');
   if (readyFilter) readyFilter.value = CHARACTER_PAGE_STATE.ready;
 
-  const projectId = sel?.value || null;
-  const rawList = await SoavizCharacters.list(projectId);
-  const q = CHARACTER_PAGE_STATE.search.trim().toLowerCase();
-  const list = rawList.filter(c => _characterMatchesState(c, q));
+  const { projectId, rawList, list } = await getFilteredCharactersForPage();
   const grid = $('#ch-grid');
   if (!grid) return;
   // 전체 캐릭터 수(한도는 사용자 단위) + 한도 → 진행 바 + % 남음
@@ -33967,6 +34086,10 @@ async function renderCharactersPage() {
     `;
   }
 
+  const visibleIds = new Set(list.map(c => c.id));
+  CHARACTER_PAGE_STATE.selected = new Set([...CHARACTER_PAGE_STATE.selected].filter(id => visibleIds.has(id)));
+  renderCharacterBulkbar();
+
   if (!list.length) {
     grid.innerHTML = `
       <div class="ch-empty">
@@ -33992,8 +34115,9 @@ async function renderCharactersPage() {
       ? `<div class="bible-avatar" style="background-image:url('${mainPhoto}');background-size:cover;background-position:center;color:transparent">${escapeHTML(initials)}</div>`
       : `<div class="bible-avatar">${escapeHTML(initials)}</div>`;
     return `
-      <article class="bible-card" data-ch-id="${escapeHTML(c.id)}" style="--bib-c1:${c1};--bib-c2:${c2}">
+      <article class="bible-card ${CHARACTER_PAGE_STATE.selected.has(c.id) ? 'selected' : ''}" data-ch-id="${escapeHTML(c.id)}" style="--bib-c1:${c1};--bib-c2:${c2}">
         <div class="bible-card-head">
+          <input class="ch-select-box" type="checkbox" data-ch-action="toggle-select" data-ch-id="${escapeHTML(c.id)}" ${CHARACTER_PAGE_STATE.selected.has(c.id) ? 'checked' : ''} aria-label="캐릭터 선택" />
           ${avatarHTML}
           <div style="flex:1;min-width:0">
             <h3 class="bible-name">${escapeHTML(c.name)}</h3>
@@ -34016,6 +34140,7 @@ async function renderCharactersPage() {
           <button class="ch-card-btn" data-ch-action="copy" data-ch-id="${escapeHTML(c.id)}">프롬프트 복사</button>
           <button class="ch-card-btn" data-ch-action="assign" data-ch-id="${escapeHTML(c.id)}">Shot 연결</button>
           <button class="ch-card-btn" data-ch-action="usage" data-ch-id="${escapeHTML(c.id)}">사용샷</button>
+          <button class="ch-card-btn" data-ch-action="relations" data-ch-id="${escapeHTML(c.id)}">관계</button>
           <button class="ch-card-btn" data-ch-action="duplicate" data-ch-id="${escapeHTML(c.id)}">복제</button>
         </div>
       </article>
@@ -34052,12 +34177,12 @@ async function _ensureCharLimit() {
   }
 }
 
-async function openCharacterEditor(id) {
+async function openCharacterEditor(id, preset = null) {
   const isNew = !id;
   if (isNew && !(await _ensureCharLimit())) return;  // 한도 체크
   let c = isNew ? null : await SoavizDB.db.characters.get(id);
   if (!c && !isNew) return;
-  if (isNew) c = { name: '', role: 'supporting', gender: '', age: null, appearance: '', personality: '', voiceId: '', promptFragment: '', tags: [], photos: [], projectId: $('#ch-project-select')?.value || 'default' };
+  if (isNew) c = { name: '', role: 'supporting', gender: '', age: null, appearance: '', personality: '', voiceId: '', promptFragment: '', tags: [], photos: [], relations: [], projectId: $('#ch-project-select')?.value || 'default', ...(preset || {}) };
   if (!Array.isArray(c.photos)) c.photos = [];
 
   const root = document.createElement('div');
@@ -34521,10 +34646,20 @@ async function openCharacterEditor(id) {
     if (!data.promptFragment) data.promptFragment = SoavizCharacters.autoFragment(data);
     if (isNew) {
       data.projectId = c.projectId;
-      await SoavizCharacters.create(data);
+      if (window.SoavizAuth?.isGuest?.()) {
+        try {
+          localStorage.setItem(CHARACTER_PENDING_DRAFT_KEY, JSON.stringify({ ...data, savedAt: Date.now() }));
+        } catch (_) {}
+        showToast?.('초안을 임시 보관했습니다. 가입/로그인 후 자동 저장됩니다.');
+        window.SoavizAuth.require('캐릭터 생성');
+        return;
+      }
+      const rec = await SoavizCharacters.create(data);
+      if (!rec) return;
       showToast?.(`✓ ${data.name} 추가`);
     } else {
-      await SoavizCharacters.update(c.id, data);
+      const rec = await SoavizCharacters.update(c.id, data);
+      if (!rec) return;
       showToast?.(`✓ ${data.name} 저장`);
     }
     close();
@@ -34566,9 +34701,101 @@ async function duplicateCharacter(id) {
   renderCharactersPage();
 }
 
+async function copyCharacterPromptPack() {
+  const { list, projectId } = await getFilteredCharactersForPage();
+  await copyCharacterListPromptPack(list, projectId);
+}
+
+async function copyCharacterListPromptPack(list, projectId = null) {
+  if (!list.length) { showToast?.('복사할 캐릭터가 없어요', 'error'); return; }
+  const project = projectId ? await SoavizDB.db.projects.get(projectId).catch(() => null) : null;
+  const relationLines = [];
+  const byId = new Map(list.map(c => [c.id, c]));
+  list.forEach(c => {
+    (Array.isArray(c.relations) ? c.relations : []).forEach(r => {
+      const target = byId.get(r.targetId);
+      if (!target) return;
+      relationLines.push(`- ${c.name} -> ${target.name}: ${r.type || '관계'}${r.note ? ` (${r.note})` : ''}`);
+    });
+  });
+  const text = [
+    `# Character Prompt Pack${project?.title ? ` · ${project.title}` : ''}`,
+    '',
+    ...list.map((c, i) => `${i + 1}. ${buildCharacterPrompt(c)}`).join('\n\n---\n\n').split('\n'),
+    relationLines.length ? '\n# Character Relations' : '',
+    ...relationLines,
+  ].filter(Boolean).join('\n');
+  await copyText(text);
+  showToast?.(`📋 Prompt Pack 복사됨 · ${list.length}명`);
+}
+
+async function getSelectedCharacters() {
+  await SoavizDB?.ready;
+  const rows = [];
+  for (const id of CHARACTER_PAGE_STATE.selected) {
+    const c = await SoavizDB.db.characters.get(id).catch(() => null);
+    if (c && !c.archived) rows.push(c);
+  }
+  return rows;
+}
+
+async function exportSelectedCharactersJSON() {
+  const list = await getSelectedCharacters();
+  if (!list.length) { showToast?.('선택된 캐릭터가 없어요', 'error'); return; }
+  const payload = {
+    manifest: {
+      format: 'soaviz-characters',
+      version: '1.0.0',
+      exportedAt: Date.now(),
+      scope: 'selection',
+      count: list.length,
+    },
+    characters: list,
+  };
+  downloadBlob(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }), `soaviz_selected_characters_${new Date().toISOString().slice(0,10)}.json`);
+  showToast?.(`선택 Export 완료 · ${list.length}명`);
+}
+
+async function autoBuildSelectedFragments() {
+  const list = await getSelectedCharacters();
+  if (!list.length) { showToast?.('선택된 캐릭터가 없어요', 'error'); return; }
+  let updated = 0;
+  for (const c of list) {
+    if (String(c.promptFragment || '').trim()) continue;
+    const fragment = SoavizCharacters.autoFragment(c);
+    if (!fragment) continue;
+    await SoavizCharacters.update(c.id, { promptFragment: fragment });
+    updated += 1;
+  }
+  showToast?.(`Fragment 자동정리 완료 · ${updated}명 업데이트`);
+  renderCharactersPage();
+}
+
+async function resumePendingCharacterDraftAfterAuth() {
+  if (window.SoavizAuth?.isGuest?.()) return;
+  let data = null;
+  try { data = JSON.parse(localStorage.getItem(CHARACTER_PENDING_DRAFT_KEY) || 'null'); } catch (_) {}
+  if (!data || !data.name) return;
+  try {
+    const { savedAt, ...draft } = data;
+    const rec = await SoavizCharacters.create(draft);
+    if (!rec) return;
+    localStorage.removeItem(CHARACTER_PENDING_DRAFT_KEY);
+    showToast?.(`✓ 가입 전 만든 초안 "${rec.name}" 자동 저장됨`);
+    renderCharactersPage();
+  } catch (err) {
+    console.warn('pending character restore failed', err);
+  }
+}
+
 async function createRandomCharacterQuick() {
   if (!(await _ensureCharLimit())) return;
   const r = SoavizCharacters.randomCharacter();
+  if (window.SoavizAuth?.isGuest?.()) {
+    await openCharacterEditor(null, { ...r, promptFragment: SoavizCharacters.autoFragment(r) });
+    showToast?.('게스트 모드: 랜덤 초안을 열었습니다. 저장하려면 가입/로그인이 필요해요.');
+    return;
+  }
   const projectId = $('#ch-project-select')?.value || 'default';
   const data = {
     ...r,
@@ -34582,6 +34809,151 @@ async function createRandomCharacterQuick() {
   if (!rec) return;
   showToast?.(`🎲 ${rec.name} 생성됨`);
   renderCharactersPage();
+}
+
+const CHARACTER_RELATION_TYPES = [
+  { value: 'ally', label: '동료' },
+  { value: 'rival', label: '라이벌' },
+  { value: 'mentor', label: '멘토' },
+  { value: 'family', label: '가족' },
+  { value: 'romance', label: '로맨스' },
+  { value: 'conflict', label: '갈등' },
+  { value: 'secret', label: '비밀' },
+  { value: 'past', label: '과거 인연' },
+];
+
+function _relationLabel(type) {
+  return CHARACTER_RELATION_TYPES.find(x => x.value === type)?.label || type || '관계';
+}
+
+async function openCharacterRelationsModal(characterId) {
+  const c = await SoavizDB.db.characters.get(characterId);
+  if (!c) return;
+  const all = await SoavizCharacters.list(c.projectId && c.projectId !== 'default' ? c.projectId : null);
+  const candidates = all.filter(x => x.id !== characterId);
+  let relations = Array.isArray(c.relations) ? c.relations.map(r => ({ ...r })) : [];
+  const root = document.createElement('div');
+  root.className = 'bible-modal';
+  const render = () => {
+    const targetMap = new Map(candidates.map(x => [x.id, x]));
+    root.innerHTML = `
+      <div class="bible-modal-card" style="max-width:760px">
+        <div class="bible-modal-head">
+          <h3>${escapeHTML(c.name || '캐릭터')} · 관계 설정</h3>
+          <button class="vault-btn" id="chr-close">닫기</button>
+        </div>
+        <div class="bible-modal-body">
+          <div class="ch-rel-list">
+            ${relations.length ? relations.map((r, idx) => {
+              const target = targetMap.get(r.targetId);
+              return `
+                <div class="ch-rel-item">
+                  <div>
+                    <strong>${escapeHTML(target?.name || '삭제된 캐릭터')}</strong>
+                    <div>${escapeHTML(r.note || '메모 없음')}</div>
+                  </div>
+                  <div style="display:flex;gap:6px;align-items:center">
+                    <span class="ch-rel-type">${escapeHTML(_relationLabel(r.type))}</span>
+                    <button class="ch-card-btn danger" data-remove-rel="${idx}">삭제</button>
+                  </div>
+                </div>
+              `;
+            }).join('') : `<div class="ch-empty" style="grid-column:auto;padding:38px 14px"><strong>아직 관계가 없어요.</strong>아래에서 캐릭터 관계를 추가하면 Prompt Pack과 관계 맵에 같이 반영됩니다.</div>`}
+          </div>
+          <div class="ch-rel-form">
+            <select class="ch-select" id="chr-target">
+              ${candidates.length
+                ? candidates.map(x => `<option value="${escapeHTML(x.id)}">${escapeHTML(x.name || '이름 없음')}</option>`).join('')
+                : '<option value="">같은 프로젝트에 다른 캐릭터가 없습니다</option>'}
+            </select>
+            <select class="ch-select" id="chr-type">
+              ${CHARACTER_RELATION_TYPES.map(x => `<option value="${escapeHTML(x.value)}">${escapeHTML(x.label)}</option>`).join('')}
+            </select>
+            <textarea class="ch-input" id="chr-note" placeholder="관계 메모: 서로 숨기는 비밀, 갈등 원인, 감정선 등"></textarea>
+            <div class="ch-rel-row-actions">
+              <button class="ch-action-btn" id="chr-add" ${candidates.length ? '' : 'disabled'}>관계 추가</button>
+              <button class="ch-action-btn primary" id="chr-save">저장</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    root.querySelector('#chr-close')?.addEventListener('click', () => root.remove());
+    root.querySelector('#chr-add')?.addEventListener('click', () => {
+      const targetId = root.querySelector('#chr-target')?.value || '';
+      if (!targetId) return;
+      const type = root.querySelector('#chr-type')?.value || 'ally';
+      const note = root.querySelector('#chr-note')?.value?.trim?.() || '';
+      const existing = relations.find(r => r.targetId === targetId && r.type === type);
+      if (existing) { existing.note = note || existing.note || ''; }
+      else relations.push({ targetId, type, note });
+      render();
+    });
+    root.querySelector('#chr-save')?.addEventListener('click', async () => {
+      await SoavizCharacters.update(characterId, { relations });
+      showToast?.('관계 저장됨');
+      root.remove();
+      renderCharactersPage();
+    });
+    root.querySelectorAll('[data-remove-rel]').forEach(btn => btn.addEventListener('click', () => {
+      relations.splice(parseInt(btn.dataset.removeRel, 10), 1);
+      render();
+    }));
+  };
+  document.body.appendChild(root);
+  root.addEventListener('click', e => { if (e.target === root) root.remove(); });
+  render();
+}
+
+async function openCharacterRelationMap() {
+  const { list } = await getFilteredCharactersForPage();
+  const byId = new Map(list.map(c => [c.id, c]));
+  const root = document.createElement('div');
+  root.className = 'bible-modal';
+  root.innerHTML = `
+    <div class="bible-modal-card" style="max-width:900px">
+      <div class="bible-modal-head">
+        <h3>캐릭터 관계 맵</h3>
+        <button class="vault-btn" id="chm-copy">관계 텍스트 복사</button>
+        <button class="vault-btn" id="chm-close">닫기</button>
+      </div>
+      <div class="bible-modal-body">
+        ${list.length ? `
+          <div class="ch-rel-grid">
+            ${list.map(c => {
+              const rels = (Array.isArray(c.relations) ? c.relations : []).filter(r => byId.has(r.targetId));
+              return `
+                <div class="ch-rel-card">
+                  <div class="ch-rel-title">${escapeHTML(c.name || '이름 없음')}</div>
+                  <div class="ch-rel-list">
+                    ${rels.length ? rels.map(r => {
+                      const target = byId.get(r.targetId);
+                      return `<div class="ch-rel-item"><div><strong>${escapeHTML(target.name || '이름 없음')}</strong><div>${escapeHTML(r.note || '')}</div></div><span class="ch-rel-type">${escapeHTML(_relationLabel(r.type))}</span></div>`;
+                    }).join('') : '<div style="color:var(--text-faint);font-size:12px">관계 없음</div>'}
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        ` : `<div class="ch-empty" style="grid-column:auto"><strong>표시할 캐릭터가 없어요.</strong></div>`}
+      </div>
+    </div>
+  `;
+  document.body.appendChild(root);
+  const close = () => root.remove();
+  root.addEventListener('click', e => { if (e.target === root) close(); });
+  root.querySelector('#chm-close')?.addEventListener('click', close);
+  root.querySelector('#chm-copy')?.addEventListener('click', async () => {
+    const lines = [];
+    list.forEach(c => {
+      (Array.isArray(c.relations) ? c.relations : []).forEach(r => {
+        const target = byId.get(r.targetId);
+        if (target) lines.push(`${c.name} -> ${target.name}: ${_relationLabel(r.type)}${r.note ? ` / ${r.note}` : ''}`);
+      });
+    });
+    await copyText(lines.length ? lines.join('\n') : '관계 없음');
+    showToast?.('관계 텍스트 복사됨');
+  });
 }
 
 async function _characterShotRows(characterProjectId = null) {
@@ -34638,6 +35010,38 @@ async function openCharacterAssignModal(characterId) {
       await SoavizPipeline.updateShot(shot.id, { characterIds: [...ids] });
       SoavizPipeline.notify?.();
       showToast?.(`✓ ${c.name} → Shot ${shot.number || ''} 연결됨`);
+    },
+  });
+}
+
+async function openCharacterBatchAssignModal() {
+  const list = await getSelectedCharacters();
+  if (!list.length) { showToast?.('선택된 캐릭터가 없어요', 'error'); return; }
+  const preferredProjectId = $('#ch-project-select')?.value || list.find(c => c.projectId && c.projectId !== 'default')?.projectId || null;
+  const rows = await _characterShotRows(preferredProjectId);
+  if (!rows.length) {
+    showToast?.('연결할 Shot이 없어요. Pipeline에서 Episode/Scene/Shot을 먼저 만들어 주세요.', 'error');
+    return;
+  }
+  const selectedShotId = SoavizPipeline?.state?.selected?.kind === 'shot' ? SoavizPipeline.state.selected.id : '';
+  openPipelineModal({
+    title: '선택 캐릭터를 Shot에 일괄 연결',
+    intro: `${list.length}명의 캐릭터를 대상 Shot의 characterIds에 한 번에 추가합니다.`,
+    fields: [
+      { id: 'shotId', label: '대상 Shot', type: 'select', value: selectedShotId, options: rows.map(({ sh, sc, ep, pr }) => ({
+        value: sh.id,
+        label: `${pr?.title || '프로젝트'} / E${ep?.number || '-'} ${ep?.title || ''} / S${sc?.number || '-'} / Shot ${sh.number || '-'} · ${(sh.description || '').slice(0, 44)}`,
+      })) },
+    ],
+    submitLabel: '일괄 연결',
+    onSubmit: async (v) => {
+      const shot = await SoavizDB.db.shots.get(v.shotId);
+      if (!shot) { showToast?.('Shot을 찾을 수 없어요', 'error'); return false; }
+      const ids = new Set(Array.isArray(shot.characterIds) ? shot.characterIds : []);
+      list.forEach(c => ids.add(c.id));
+      await SoavizPipeline.updateShot(shot.id, { characterIds: [...ids] });
+      SoavizPipeline.notify?.();
+      showToast?.(`✓ Shot ${shot.number || ''}에 ${list.length}명 연결됨`);
     },
   });
 }
@@ -34739,6 +35143,11 @@ async function importCharactersJSON(file) {
       promptFragment: row.promptFragment || '',
       tags: Array.isArray(row.tags) ? row.tags : [],
       photos: Array.isArray(row.photos) ? row.photos.filter(p => p?.dataUrl).slice(0, 5) : [],
+      relations: Array.isArray(row.relations) ? row.relations.map(r => ({
+        targetId: r.targetId,
+        type: r.type || 'ally',
+        note: r.note || '',
+      })).filter(r => r.targetId) : [],
       projectId: targetProjectId || row.projectId || 'default',
     };
     const rec = await SoavizCharacters.create(data);
@@ -34766,6 +35175,8 @@ function bindCharactersPage() {
     renderCharactersPage();
   });
   $('#ch-random-btn')?.addEventListener('click', () => createRandomCharacterQuick());
+  $('#ch-pack-btn')?.addEventListener('click', () => copyCharacterPromptPack());
+  $('#ch-relmap-btn')?.addEventListener('click', () => openCharacterRelationMap());
   $('#ch-export-btn')?.addEventListener('click', () => exportCharactersJSON());
   $('#ch-import-btn')?.addEventListener('click', () => $('#ch-import-input')?.click());
   $('#ch-import-input')?.addEventListener('change', e => {
@@ -34778,15 +35189,40 @@ function bindCharactersPage() {
     e.stopPropagation();
     const action = btn.dataset.chAction;
     const id = btn.dataset.chId;
-    if (action === 'new') openCharacterEditor(null);
+    if (action === 'toggle-select' && id) {
+      if (btn.checked) CHARACTER_PAGE_STATE.selected.add(id);
+      else CHARACTER_PAGE_STATE.selected.delete(id);
+      renderCharactersPage();
+    }
+    else if (action === 'new') openCharacterEditor(null);
     else if (action === 'random') createRandomCharacterQuick();
     else if (action === 'edit' && id) openCharacterEditor(id);
     else if (action === 'copy' && id) await copyCharacterPrompt(id);
     else if (action === 'assign' && id) await openCharacterAssignModal(id);
     else if (action === 'usage' && id) await openCharacterUsageModal(id);
+    else if (action === 'relations' && id) await openCharacterRelationsModal(id);
     else if (action === 'duplicate' && id) await duplicateCharacter(id);
   });
+  $('#ch-bulkbar')?.addEventListener('click', async e => {
+    const btn = e.target.closest('[data-ch-bulk]');
+    if (!btn) return;
+    const action = btn.dataset.chBulk;
+    if (action === 'copy') {
+      const list = await getSelectedCharacters();
+      await copyCharacterListPromptPack(list, $('#ch-project-select')?.value || null);
+    } else if (action === 'assign') {
+      await openCharacterBatchAssignModal();
+    } else if (action === 'fragment') {
+      await autoBuildSelectedFragments();
+    } else if (action === 'export') {
+      await exportSelectedCharactersJSON();
+    } else if (action === 'clear') {
+      CHARACTER_PAGE_STATE.selected.clear();
+      renderCharactersPage();
+    }
+  });
   renderCharactersPage();
+  resumePendingCharacterDraftAfterAuth();
 }
 
 /* ════════════════════════════════════════════════════════════
