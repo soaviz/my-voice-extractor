@@ -5875,28 +5875,27 @@
        v2 RESPONSIVE (mobile / tablet)
        ═══════════════════════════ */
     @media (max-width: 880px) {
-      /* 사이드바를 작은 화면에서도 좌측 고정 — 아이콘만 표시 (compact) */
+      /* 사이드바를 작은 화면에서도 좌측 고정 — 사용자가 숨기기 전까지 표시 */
       .layout {
-        grid-template-columns: 64px 1fr;
+        grid-template-columns: minmax(156px, 34vw) 1fr;
         padding-top: var(--topbar-h);
       }
       .layout.sidebar-collapsed { grid-template-columns: 0 1fr; }
       .sidebar {
-        display: flex;             /* 강제 표시 (이전 hidden 무력화) */
-        padding: var(--s-3) 6px;
+        display: flex;
+        padding: var(--s-3) 8px;
       }
-      /* 아이콘만, 라벨 숨김 */
       .nav-item {
-        flex-direction: column;
+        flex-direction: row;
         align-items: center;
-        justify-content: center;
-        gap: 0;
-        padding: 12px 4px;
-        font-size: 0;              /* 라벨 텍스트 숨김 */
+        justify-content: flex-start;
+        gap: 8px;
+        padding: 9px 8px;
+        font-size: 11px;
         color: var(--text-faint);
       }
       .nav-item .icon {
-        width: 22px; height: 22px;
+        width: 17px; height: 17px;
         margin: 0;
       }
       .nav-item.active::after {
@@ -5912,7 +5911,6 @@
       .sidebar > .nav-divider {
         margin: var(--s-2) 8px;
       }
-      /* bottom nav 숨김 — 사이드바가 그 역할 함 */
       .bottom-nav { display: none !important; }
       .main {
         padding: var(--s-5) var(--s-4) var(--s-7);
@@ -5931,6 +5929,24 @@
       .ba-toggle button { flex: 1; justify-content: center; }
       .topbar { padding: 0 var(--s-3); }
       .brand-sub { display: none; }
+    }
+    @media (max-width: 520px) {
+      .layout { grid-template-columns: 72px 1fr; }
+      .nav-item {
+        flex-direction: column;
+        justify-content: center;
+        gap: 3px;
+        padding: 9px 4px;
+        font-size: 9px;
+        line-height: 1.15;
+        letter-spacing: 0;
+      }
+      .nav-section-label {
+        font-size: 8px;
+        text-align: center;
+        padding-inline: 0;
+      }
+      .nav-pill { display: none !important; }
     }
 
     /* ═══════════════════════════
@@ -6048,7 +6064,11 @@
       color: var(--text-dim);
       font-size: var(--fs-xs);
       font-weight: 600;
+      font-family: inherit;
+      cursor: default;
     }
+    button.vid-hero-chip { cursor: pointer; }
+    button.vid-hero-chip:hover { color: var(--accent); border-color: rgba(167,139,250,0.42); }
     .vid-hero-panel {
       padding: var(--s-5);
       display: grid;
@@ -11203,7 +11223,7 @@
     }
     .ch-workbench {
       display: grid;
-      grid-template-columns: minmax(220px, 1fr) auto;
+      grid-template-columns: 1fr;
       gap: 12px;
       align-items: start;
       margin-bottom: 18px;
@@ -11217,7 +11237,7 @@
     .ch-actions {
       display: flex;
       gap: 8px;
-      justify-content: flex-end;
+      justify-content: flex-start;
       flex-wrap: wrap;
     }
     .ch-input,
@@ -11465,8 +11485,6 @@
       grid-column: 1 / -1;
     }
     @media (max-width: 980px) {
-      .ch-workbench { grid-template-columns: 1fr; }
-      .ch-actions { justify-content: flex-start; }
       .ch-controls { grid-template-columns: 1fr 1fr; }
     }
     @media (max-width: 640px) {
@@ -13317,13 +13335,14 @@
         gap: 6px !important;
       }
       .topbar-left { gap: 6px; }
-      .sidebar-toggle { display: none !important; }  /* 모바일에선 햄버거 대신 bottom nav */
-      .sidebar { display: none !important; }
+      .sidebar-toggle { display: grid !important; }
+      .sidebar { display: flex !important; }
       .layout {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: minmax(156px, 34vw) 1fr !important;
       }
+      .layout.sidebar-collapsed { grid-template-columns: 0 1fr !important; }
       .main {
-        padding: 14px 14px calc(var(--bottom-nav-h) + 16px) !important;
+        padding: 14px 14px 32px !important;
         margin: 0 !important;
       }
       /* topbar 압축 */
@@ -13848,6 +13867,26 @@
       button:not(.icon-btn):not(.dec-quick-btn):not(.pl-wf-step-rm) {
         min-height: 38px;
       }
+    }
+    @media (max-width: 520px) {
+      .layout { grid-template-columns: 72px 1fr !important; }
+      .layout.sidebar-collapsed { grid-template-columns: 0 1fr !important; }
+      .nav-item {
+        flex-direction: column !important;
+        justify-content: center !important;
+        gap: 3px !important;
+        padding: 9px 4px !important;
+        font-size: 9px !important;
+        line-height: 1.15 !important;
+        letter-spacing: 0 !important;
+        text-align: center !important;
+      }
+      .nav-section-label {
+        font-size: 8px !important;
+        text-align: center !important;
+        padding-inline: 0 !important;
+      }
+      .nav-pill { display: none !important; }
     }
 
     /* ── 25. 모션 감소 선호 ────────────────────────────────── */
@@ -14477,7 +14516,26 @@
       </svg>
       Today
     </a>
-    <a class="nav-item" data-page="pipeline" title="Pipeline · 스토리보드 트리">
+    <!-- ═══ 01 PLANNING ═══ -->
+    <div class="nav-section-label">01 · 기획</div>
+    <a class="nav-item persona-nav-item" data-page="personas" title="Logline · 세계관 · 스토리 기획">
+      <svg class="icon" viewBox="0 0 24 24">
+        <path d="M12 3.5 13.9 8l4.8.4-3.7 3.1 1.1 4.7-4.1-2.5-4.1 2.5 1.1-4.7-3.7-3.1 4.8-.4z"/>
+        <path d="M8 20c0-2.2 1.8-4 4-4s4 1.8 4 4"/>
+      </svg>
+      기획/스토리
+    </a>
+    <a class="nav-item" data-page="projects" title="Projects">
+      <svg class="icon" viewBox="0 0 24 24">
+        <path d="M20 7h-7l-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+        <line x1="7" y1="13" x2="17" y2="13"/>
+      </svg>
+      프로젝트
+    </a>
+
+    <!-- ═══ 02 PRE-PRODUCTION ═══ -->
+    <div class="nav-section-label">02 · 프리프로덕션</div>
+    <a class="nav-item" data-page="pipeline" title="Pipeline · 시놉시스 · 샷 리스트 · 스토리보드 트리">
       <svg class="icon" viewBox="0 0 24 24">
         <circle cx="6" cy="6" r="2"/>
         <circle cx="18" cy="6" r="2"/>
@@ -14485,33 +14543,53 @@
         <path d="M8 6h8M18 8v8"/>
         <path d="M6 8v6a2 2 0 0 0 2 2h6"/>
       </svg>
-      Pipeline
+      샷 리스트
       <span class="nav-pill" style="margin-left:auto;font-size:9px;padding:2px 6px;background:#a78bfa;color:#fff;border-radius:8px;font-weight:700">v3</span>
     </a>
-    <a class="nav-item" data-page="projects" title="Projects">
+    <a class="nav-item" data-page="characters" title="캐릭터 페르소나">
       <svg class="icon" viewBox="0 0 24 24">
-        <path d="M20 7h-7l-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
-        <line x1="7" y1="13" x2="17" y2="13"/>
+        <circle cx="12" cy="8" r="4"/>
+        <path d="M5 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2"/>
       </svg>
-      Projects
+      캐릭터 페르소나
     </a>
-    <a class="nav-item persona-nav-item" data-page="personas" title="Personas">
+    <a class="nav-item" data-page="styles" title="룩북 & 레퍼런스 · Style Bible">
       <svg class="icon" viewBox="0 0 24 24">
-        <path d="M12 3.5 13.9 8l4.8.4-3.7 3.1 1.1 4.7-4.1-2.5-4.1 2.5 1.1-4.7-3.7-3.1 4.8-.4z"/>
-        <path d="M8 20c0-2.2 1.8-4 4-4s4 1.8 4 4"/>
+        <circle cx="12" cy="12" r="10"/>
+        <circle cx="8" cy="9" r="1.5"/>
+        <circle cx="16" cy="9" r="1.5"/>
+        <circle cx="8" cy="14" r="1.5"/>
+        <circle cx="16" cy="14" r="1.5"/>
       </svg>
-      Personas
+      룩북 & 레퍼런스
     </a>
 
-    <!-- ═══ CREATE ═══ -->
-    <div class="nav-section-label">CREATE</div>
+    <!-- ═══ 03 VIDEO GENERATION ═══ -->
+    <div class="nav-section-label">03 · 영상 생성</div>
+    <a class="nav-item" data-page="video-studio" title="Video Studio">
+      <svg class="icon" viewBox="0 0 24 24">
+        <polygon points="23 7 16 12 23 17 23 7"/>
+        <rect x="1" y="5" width="15" height="14" rx="2"/>
+      </svg>
+      영상 생성
+    </a>
+    <!-- ═══ 04 SOUND ═══ -->
+    <div class="nav-section-label">04 · 사운드 제작</div>
     <a class="nav-item" data-page="voice-studio" title="Voice Studio">
       <svg class="icon" viewBox="0 0 24 24">
         <path d="M12 2a4 4 0 0 0-4 4v6a4 4 0 0 0 8 0V6a4 4 0 0 0-4-4z"/>
         <path d="M19 10a7 7 0 0 1-14 0"/>
         <line x1="12" y1="19" x2="12" y2="22"/>
       </svg>
-      Voice Studio
+      내레이션/TTS
+    </a>
+    <a class="nav-item" data-page="voices" title="Voices Library · 보이스 선택">
+      <svg class="icon" viewBox="0 0 24 24">
+        <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
+        <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z"/>
+        <path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
+      </svg>
+      보이스 선택
     </a>
     <a class="nav-item" data-page="music-studio" title="Music Studio">
       <svg class="icon" viewBox="0 0 24 24">
@@ -14519,13 +14597,13 @@
         <circle cx="6" cy="18" r="3"/>
         <circle cx="18" cy="16" r="3"/>
       </svg>
-      Music Studio
+      음악 제작
     </a>
     <a class="nav-item" data-page="sfx-studio" title="SFX Studio">
       <svg class="icon" viewBox="0 0 24 24">
         <path d="m12 3-1.7 5.1a6 6 0 0 1-4 4L3 14l4.3 1a6 6 0 0 1 4 4l1.7 5 1.7-5a6 6 0 0 1 4-4l4.3-1-4.3-1a6 6 0 0 1-4-4z"/>
       </svg>
-      SFX Studio
+      효과음
     </a>
     <a class="nav-item" data-page="transcript" title="Transcript">
       <svg class="icon" viewBox="0 0 24 24">
@@ -14534,99 +14612,26 @@
         <line x1="7" y1="13" x2="15" y2="13"/>
         <line x1="7" y1="16" x2="13" y2="16"/>
       </svg>
-      Transcript
+      자막/대사
     </a>
-    <a class="nav-item" data-page="video-studio" title="Video Studio">
-      <svg class="icon" viewBox="0 0 24 24">
-        <polygon points="23 7 16 12 23 17 23 7"/>
-        <rect x="1" y="5" width="15" height="14" rx="2"/>
-      </svg>
-      Video Studio
-    </a>
-    <a class="nav-item" data-page="compare" title="Compare Mode · A/B/C 동시 생성">
-      <svg class="icon" viewBox="0 0 24 24">
-        <rect x="3" y="3" width="7" height="18" rx="1"/>
-        <rect x="14" y="3" width="7" height="18" rx="1"/>
-        <line x1="10" y1="12" x2="14" y2="12"/>
-      </svg>
-      Compare Mode
-      <span class="nav-pill" style="margin-left:auto;font-size:9px;padding:2px 6px;background:#a78bfa;color:#fff;border-radius:8px;font-weight:700">v3</span>
-    </a>
-    <a class="nav-item" data-page="project-archive" title="완료된 프로젝트 보관함">
-      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="3" width="18" height="4" rx="1"/>
-        <path d="M5 7v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7"/>
-        <line x1="10" y1="12" x2="14" y2="12"/>
-      </svg>
-      프로젝트 라이브러리
-      <span id="nav-archive-count" class="nav-pill" style="display:none;margin-left:auto;font-size:10px;padding:1px 6px;background:rgba(167,139,250,0.20);color:var(--accent);border-radius:8px;font-weight:700">0</span>
-    </a>
-
-    <!-- ═══ REFERENCE (v3 M2) ═══ -->
-    <div class="nav-section-label">REFERENCE</div>
-    <a class="nav-item" data-page="characters" title="캐릭터 페르소나">
-      <svg class="icon" viewBox="0 0 24 24">
-        <circle cx="12" cy="8" r="4"/>
-        <path d="M5 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2"/>
-      </svg>
-      캐릭터 페르소나
-    </a>
-    <a class="nav-item" data-page="styles" title="Style Bible · 룩북">
-      <svg class="icon" viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="10"/>
-        <circle cx="8" cy="9" r="1.5"/>
-        <circle cx="16" cy="9" r="1.5"/>
-        <circle cx="8" cy="14" r="1.5"/>
-        <circle cx="16" cy="14" r="1.5"/>
-      </svg>
-      Style Bible
-    </a>
-    <a class="nav-item" data-page="cinema" title="Cinema Library · 참고 영상">
-      <svg class="icon" viewBox="0 0 24 24">
-        <rect x="2" y="2" width="20" height="20" rx="2.18"/>
-        <line x1="7" y1="2" x2="7" y2="22"/>
-        <line x1="17" y1="2" x2="17" y2="22"/>
-        <line x1="2" y1="12" x2="22" y2="12"/>
-        <line x1="2" y1="7" x2="7" y2="7"/>
-        <line x1="2" y1="17" x2="7" y2="17"/>
-        <line x1="17" y1="17" x2="22" y2="17"/>
-        <line x1="17" y1="7" x2="22" y2="7"/>
-      </svg>
-      Cinema Library
-    </a>
-
-    <!-- ═══ MEMORY ═══ -->
-    <div class="nav-section-label">MEMORY</div>
-    <a class="nav-item" data-page="production-log" title="Production Log">
-      <svg class="icon" viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="10"/>
-        <polyline points="12 6 12 12 16 14"/>
-      </svg>
-      Production Log
-    </a>
+    <!-- ═══ 05 FINISH & PACKAGE ═══ -->
+    <div class="nav-section-label">05 · 후반/패키징</div>
     <a class="nav-item" data-page="library" title="Decision Library · 의사결정 회고용 결과물 저장소">
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <path d="M20 7h-7l-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
         <polyline points="9 14 11 16 15 12"/>
       </svg>
-      Decision Library
+      결과 보관
     </a>
-    <a class="nav-item" data-page="memory-graph" title="Memory Graph · 유사 샷 추천 인덱스 + 통계">
+    <a class="nav-item" data-page="project-archive" title="최종 출력 · 완료된 프로젝트 보관함">
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="6" cy="6" r="2.2"/>
-        <circle cx="18" cy="6" r="2.2"/>
-        <circle cx="6" cy="18" r="2.2"/>
-        <circle cx="18" cy="18" r="2.2"/>
-        <circle cx="12" cy="12" r="2.2"/>
-        <line x1="6" y1="6" x2="12" y2="12"/>
-        <line x1="18" y1="6" x2="12" y2="12"/>
-        <line x1="6" y1="18" x2="12" y2="12"/>
-        <line x1="18" y1="18" x2="12" y2="12"/>
+        <rect x="3" y="3" width="18" height="4" rx="1"/>
+        <path d="M5 7v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7"/>
+        <line x1="10" y1="12" x2="14" y2="12"/>
       </svg>
-      Memory Graph
-      <span class="nav-pill" style="margin-left:auto;font-size:9px;padding:2px 6px;background:#34D399;color:#fff;border-radius:8px;font-weight:700">NEW</span>
+      최종 출력
+      <span id="nav-archive-count" class="nav-pill" style="display:none;margin-left:auto;font-size:10px;padding:1px 6px;background:rgba(167,139,250,0.20);color:var(--accent);border-radius:8px;font-weight:700">0</span>
     </a>
-
     <!-- ═══ SYSTEM ═══ -->
     <div class="nav-section-label">SYSTEM</div>
     <a class="nav-item" href="docs/index.html" target="_blank" rel="noopener" title="Documentation · 사용자 가이드 (새 탭)">
@@ -14634,7 +14639,7 @@
         <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
         <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
       </svg>
-      Documentation
+      사용자 가이드
       <svg style="margin-left:auto;width:11px;height:11px;opacity:0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>
     </a>
     <a class="nav-item" data-page="settings" title="Settings">
@@ -14642,13 +14647,13 @@
         <circle cx="12" cy="12" r="3"/>
         <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>
       </svg>
-      Settings
+      설정
     </a>
 
     <div class="nav-spacer"></div>
 
     <button class="nav-upgrade" id="nav-upgrade-btn">
-      PRO Upgrade
+      플랜 업그레이드
     </button>
   </aside>
 
@@ -14670,11 +14675,11 @@
     </button>
     <button class="bn-item" data-page="pipeline" aria-label="Pipeline">
       <svg class="icon" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="18" cy="18" r="2"/><path d="M8 6h8M18 8v8"/><path d="M6 8v6a2 2 0 0 0 2 2h6"/></svg>
-      Pipeline
+      샷 리스트
     </button>
     <button class="bn-item" data-page="personas" aria-label="Personas">
       <svg class="icon" viewBox="0 0 24 24"><path d="M12 3.5 13.9 8l4.8.4-3.7 3.1 1.1 4.7-4.1-2.5-4.1 2.5 1.1-4.7-3.7-3.1 4.8-.4z"/></svg>
-      Personas
+      기획/스토리
     </button>
     <button class="bn-item" data-page="library" aria-label="Library">
       <svg class="icon" viewBox="0 0 24 24"><path d="M20 7h-7l-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/></svg>
@@ -15491,122 +15496,122 @@
         <div class="editor-tools">
           <div class="tag-row">
             <span class="tag-row-label">표현</span>
-            <button class="tag-btn" data-tag="[쉼]"><code>[쉼]</code>0.5초</button>
-            <button class="tag-btn" data-tag="[강]"><code>[강]</code>강조</button>
-            <button class="tag-btn" data-tag="[숨]"><code>[숨]</code>숨결</button>
-            <button class="tag-btn" data-tag="[느리게]"><code>[느리게]</code></button>
-            <button class="tag-btn" data-tag="[빠르게]"><code>[빠르게]</code></button>
+            <button class="tag-btn" data-tag="#쉼 "><code>#쉼</code>0.5초</button>
+            <button class="tag-btn" data-tag="#강 "><code>#강</code>강조</button>
+            <button class="tag-btn" data-tag="#숨 "><code>#숨</code>숨결</button>
+            <button class="tag-btn" data-tag="#느리게 "><code>#느리게</code></button>
+            <button class="tag-btn" data-tag="#빠르게 "><code>#빠르게</code></button>
           </div>
           <div class="tag-row emotion-row">
             <span class="tag-row-label">감정<span class="emo-count" id="emo-count">0/100</span></span>
             <div class="emotion-tags" id="emotion-tags">
-              <button class="tag-btn emo" data-tag="[기쁨]">기쁨</button>
-              <button class="tag-btn emo" data-tag="[슬픔]">슬픔</button>
-              <button class="tag-btn emo" data-tag="[분노]">분노</button>
-              <button class="tag-btn emo" data-tag="[놀람]">놀람</button>
-              <button class="tag-btn emo" data-tag="[두려움]">두려움</button>
-              <button class="tag-btn emo" data-tag="[혐오]">혐오</button>
-              <button class="tag-btn emo" data-tag="[설렘]">설렘</button>
-              <button class="tag-btn emo" data-tag="[행복]">행복</button>
-              <button class="tag-btn emo" data-tag="[사랑]">사랑</button>
-              <button class="tag-btn emo" data-tag="[증오]">증오</button>
-              <button class="tag-btn emo" data-tag="[희망]">희망</button>
-              <button class="tag-btn emo" data-tag="[절망]">절망</button>
-              <button class="tag-btn emo" data-tag="[환희]">환희</button>
-              <button class="tag-btn emo" data-tag="[황홀]">황홀</button>
-              <button class="tag-btn emo" data-tag="[격분]">격분</button>
-              <button class="tag-btn emo" data-tag="[비통]">비통</button>
-              <button class="tag-btn emo" data-tag="[통곡]">통곡</button>
-              <button class="tag-btn emo" data-tag="[광희]">광희</button>
-              <button class="tag-btn emo" data-tag="[감격]">감격</button>
-              <button class="tag-btn emo" data-tag="[격앙]">격앙</button>
-              <button class="tag-btn emo" data-tag="[격정]">격정</button>
-              <button class="tag-btn emo" data-tag="[들뜸]">들뜸</button>
-              <button class="tag-btn emo" data-tag="[고양]">고양</button>
-              <button class="tag-btn emo" data-tag="[흥분]">흥분</button>
-              <button class="tag-btn emo" data-tag="[따뜻]">따뜻</button>
-              <button class="tag-btn emo" data-tag="[차분]">차분</button>
-              <button class="tag-btn emo" data-tag="[진지]">진지</button>
-              <button class="tag-btn emo" data-tag="[침착]">침착</button>
-              <button class="tag-btn emo" data-tag="[고요]">고요</button>
-              <button class="tag-btn emo" data-tag="[평온]">평온</button>
-              <button class="tag-btn emo" data-tag="[안정]">안정</button>
-              <button class="tag-btn emo" data-tag="[몰입]">몰입</button>
-              <button class="tag-btn emo" data-tag="[담담]">담담</button>
-              <button class="tag-btn emo" data-tag="[묵직]">묵직</button>
-              <button class="tag-btn emo" data-tag="[깊음]">깊음</button>
-              <button class="tag-btn emo" data-tag="[은은]">은은</button>
-              <button class="tag-btn emo" data-tag="[긴장]">긴장</button>
-              <button class="tag-btn emo" data-tag="[초조]">초조</button>
-              <button class="tag-btn emo" data-tag="[불안]">불안</button>
-              <button class="tag-btn emo" data-tag="[공포]">공포</button>
-              <button class="tag-btn emo" data-tag="[경악]">경악</button>
-              <button class="tag-btn emo" data-tag="[충격]">충격</button>
-              <button class="tag-btn emo" data-tag="[의심]">의심</button>
-              <button class="tag-btn emo" data-tag="[경계]">경계</button>
-              <button class="tag-btn emo" data-tag="[혼란]">혼란</button>
-              <button class="tag-btn emo" data-tag="[당황]">당황</button>
-              <button class="tag-btn emo" data-tag="[공감]">공감</button>
-              <button class="tag-btn emo" data-tag="[동정]">동정</button>
-              <button class="tag-btn emo" data-tag="[신뢰]">신뢰</button>
-              <button class="tag-btn emo" data-tag="[친근]">친근</button>
-              <button class="tag-btn emo" data-tag="[다정]">다정</button>
-              <button class="tag-btn emo" data-tag="[애틋]">애틋</button>
-              <button class="tag-btn emo" data-tag="[그리움]">그리움</button>
-              <button class="tag-btn emo" data-tag="[애정]">애정</button>
-              <button class="tag-btn emo" data-tag="[포근]">포근</button>
-              <button class="tag-btn emo" data-tag="[살가움]">살가움</button>
-              <button class="tag-btn emo" data-tag="[우울]">우울</button>
-              <button class="tag-btn emo" data-tag="[상실]">상실</button>
-              <button class="tag-btn emo" data-tag="[회한]">회한</button>
-              <button class="tag-btn emo" data-tag="[후회]">후회</button>
-              <button class="tag-btn emo" data-tag="[죄책]">죄책</button>
-              <button class="tag-btn emo" data-tag="[수치]">수치</button>
-              <button class="tag-btn emo" data-tag="[무력]">무력</button>
-              <button class="tag-btn emo" data-tag="[씁쓸]">씁쓸</button>
-              <button class="tag-btn emo" data-tag="[속삭임]">속삭임</button>
-              <button class="tag-btn emo" data-tag="[외침]">외침</button>
-              <button class="tag-btn emo" data-tag="[웃음]">웃음</button>
-              <button class="tag-btn emo" data-tag="[울음]">울음</button>
-              <button class="tag-btn emo" data-tag="[한숨]">한숨</button>
-              <button class="tag-btn emo" data-tag="[흐느낌]">흐느낌</button>
-              <button class="tag-btn emo" data-tag="[떨림]">떨림</button>
-              <button class="tag-btn emo" data-tag="[단호]">단호</button>
-              <button class="tag-btn emo" data-tag="[또박또박]">또박또박</button>
-              <button class="tag-btn emo" data-tag="[부드러움]">부드러움</button>
-              <button class="tag-btn emo" data-tag="[거침]">거침</button>
-              <button class="tag-btn emo" data-tag="[낮은]">낮은</button>
-              <button class="tag-btn emo" data-tag="[장난]">장난</button>
-              <button class="tag-btn emo" data-tag="[냉소]">냉소</button>
-              <button class="tag-btn emo" data-tag="[열정]">열정</button>
-              <button class="tag-btn emo" data-tag="[자신감]">자신감</button>
-              <button class="tag-btn emo" data-tag="[수줍음]">수줍음</button>
-              <button class="tag-btn emo" data-tag="[당당]">당당</button>
-              <button class="tag-btn emo" data-tag="[의기양양]">의기양양</button>
-              <button class="tag-btn emo" data-tag="[오만]">오만</button>
-              <button class="tag-btn emo" data-tag="[거만]">거만</button>
-              <button class="tag-btn emo" data-tag="[비굴]">비굴</button>
-              <button class="tag-btn emo" data-tag="[비꼬는]">비꼬는</button>
-              <button class="tag-btn emo" data-tag="[반항]">반항</button>
-              <button class="tag-btn emo" data-tag="[신비]">신비</button>
-              <button class="tag-btn emo" data-tag="[몽환]">몽환</button>
-              <button class="tag-btn emo" data-tag="[그윽]">그윽</button>
-              <button class="tag-btn emo" data-tag="[은근]">은근</button>
-              <button class="tag-btn emo" data-tag="[몽롱]">몽롱</button>
-              <button class="tag-btn emo" data-tag="[아득]">아득</button>
-              <button class="tag-btn emo" data-tag="[고즈넉]">고즈넉</button>
-              <button class="tag-btn emo" data-tag="[아련]">아련</button>
-              <button class="tag-btn emo" data-tag="[극적]">극적</button>
-              <button class="tag-btn emo" data-tag="[애절]">애절</button>
-              <button class="tag-btn emo" data-tag="[비장]">비장</button>
-              <button class="tag-btn emo" data-tag="[장엄]">장엄</button>
+              <button class="tag-btn emo" data-tag="#기쁨 ">기쁨</button>
+              <button class="tag-btn emo" data-tag="#슬픔 ">슬픔</button>
+              <button class="tag-btn emo" data-tag="#분노 ">분노</button>
+              <button class="tag-btn emo" data-tag="#놀람 ">놀람</button>
+              <button class="tag-btn emo" data-tag="#두려움 ">두려움</button>
+              <button class="tag-btn emo" data-tag="#혐오 ">혐오</button>
+              <button class="tag-btn emo" data-tag="#설렘 ">설렘</button>
+              <button class="tag-btn emo" data-tag="#행복 ">행복</button>
+              <button class="tag-btn emo" data-tag="#사랑 ">사랑</button>
+              <button class="tag-btn emo" data-tag="#증오 ">증오</button>
+              <button class="tag-btn emo" data-tag="#희망 ">희망</button>
+              <button class="tag-btn emo" data-tag="#절망 ">절망</button>
+              <button class="tag-btn emo" data-tag="#환희 ">환희</button>
+              <button class="tag-btn emo" data-tag="#황홀 ">황홀</button>
+              <button class="tag-btn emo" data-tag="#격분 ">격분</button>
+              <button class="tag-btn emo" data-tag="#비통 ">비통</button>
+              <button class="tag-btn emo" data-tag="#통곡 ">통곡</button>
+              <button class="tag-btn emo" data-tag="#광희 ">광희</button>
+              <button class="tag-btn emo" data-tag="#감격 ">감격</button>
+              <button class="tag-btn emo" data-tag="#격앙 ">격앙</button>
+              <button class="tag-btn emo" data-tag="#격정 ">격정</button>
+              <button class="tag-btn emo" data-tag="#들뜸 ">들뜸</button>
+              <button class="tag-btn emo" data-tag="#고양 ">고양</button>
+              <button class="tag-btn emo" data-tag="#흥분 ">흥분</button>
+              <button class="tag-btn emo" data-tag="#따뜻 ">따뜻</button>
+              <button class="tag-btn emo" data-tag="#차분 ">차분</button>
+              <button class="tag-btn emo" data-tag="#진지 ">진지</button>
+              <button class="tag-btn emo" data-tag="#침착 ">침착</button>
+              <button class="tag-btn emo" data-tag="#고요 ">고요</button>
+              <button class="tag-btn emo" data-tag="#평온 ">평온</button>
+              <button class="tag-btn emo" data-tag="#안정 ">안정</button>
+              <button class="tag-btn emo" data-tag="#몰입 ">몰입</button>
+              <button class="tag-btn emo" data-tag="#담담 ">담담</button>
+              <button class="tag-btn emo" data-tag="#묵직 ">묵직</button>
+              <button class="tag-btn emo" data-tag="#깊음 ">깊음</button>
+              <button class="tag-btn emo" data-tag="#은은 ">은은</button>
+              <button class="tag-btn emo" data-tag="#긴장 ">긴장</button>
+              <button class="tag-btn emo" data-tag="#초조 ">초조</button>
+              <button class="tag-btn emo" data-tag="#불안 ">불안</button>
+              <button class="tag-btn emo" data-tag="#공포 ">공포</button>
+              <button class="tag-btn emo" data-tag="#경악 ">경악</button>
+              <button class="tag-btn emo" data-tag="#충격 ">충격</button>
+              <button class="tag-btn emo" data-tag="#의심 ">의심</button>
+              <button class="tag-btn emo" data-tag="#경계 ">경계</button>
+              <button class="tag-btn emo" data-tag="#혼란 ">혼란</button>
+              <button class="tag-btn emo" data-tag="#당황 ">당황</button>
+              <button class="tag-btn emo" data-tag="#공감 ">공감</button>
+              <button class="tag-btn emo" data-tag="#동정 ">동정</button>
+              <button class="tag-btn emo" data-tag="#신뢰 ">신뢰</button>
+              <button class="tag-btn emo" data-tag="#친근 ">친근</button>
+              <button class="tag-btn emo" data-tag="#다정 ">다정</button>
+              <button class="tag-btn emo" data-tag="#애틋 ">애틋</button>
+              <button class="tag-btn emo" data-tag="#그리움 ">그리움</button>
+              <button class="tag-btn emo" data-tag="#애정 ">애정</button>
+              <button class="tag-btn emo" data-tag="#포근 ">포근</button>
+              <button class="tag-btn emo" data-tag="#살가움 ">살가움</button>
+              <button class="tag-btn emo" data-tag="#우울 ">우울</button>
+              <button class="tag-btn emo" data-tag="#상실 ">상실</button>
+              <button class="tag-btn emo" data-tag="#회한 ">회한</button>
+              <button class="tag-btn emo" data-tag="#후회 ">후회</button>
+              <button class="tag-btn emo" data-tag="#죄책 ">죄책</button>
+              <button class="tag-btn emo" data-tag="#수치 ">수치</button>
+              <button class="tag-btn emo" data-tag="#무력 ">무력</button>
+              <button class="tag-btn emo" data-tag="#씁쓸 ">씁쓸</button>
+              <button class="tag-btn emo" data-tag="#속삭임 ">속삭임</button>
+              <button class="tag-btn emo" data-tag="#외침 ">외침</button>
+              <button class="tag-btn emo" data-tag="#웃음 ">웃음</button>
+              <button class="tag-btn emo" data-tag="#울음 ">울음</button>
+              <button class="tag-btn emo" data-tag="#한숨 ">한숨</button>
+              <button class="tag-btn emo" data-tag="#흐느낌 ">흐느낌</button>
+              <button class="tag-btn emo" data-tag="#떨림 ">떨림</button>
+              <button class="tag-btn emo" data-tag="#단호 ">단호</button>
+              <button class="tag-btn emo" data-tag="#또박또박 ">또박또박</button>
+              <button class="tag-btn emo" data-tag="#부드러움 ">부드러움</button>
+              <button class="tag-btn emo" data-tag="#거침 ">거침</button>
+              <button class="tag-btn emo" data-tag="#낮은 ">낮은</button>
+              <button class="tag-btn emo" data-tag="#장난 ">장난</button>
+              <button class="tag-btn emo" data-tag="#냉소 ">냉소</button>
+              <button class="tag-btn emo" data-tag="#열정 ">열정</button>
+              <button class="tag-btn emo" data-tag="#자신감 ">자신감</button>
+              <button class="tag-btn emo" data-tag="#수줍음 ">수줍음</button>
+              <button class="tag-btn emo" data-tag="#당당 ">당당</button>
+              <button class="tag-btn emo" data-tag="#의기양양 ">의기양양</button>
+              <button class="tag-btn emo" data-tag="#오만 ">오만</button>
+              <button class="tag-btn emo" data-tag="#거만 ">거만</button>
+              <button class="tag-btn emo" data-tag="#비굴 ">비굴</button>
+              <button class="tag-btn emo" data-tag="#비꼬는 ">비꼬는</button>
+              <button class="tag-btn emo" data-tag="#반항 ">반항</button>
+              <button class="tag-btn emo" data-tag="#신비 ">신비</button>
+              <button class="tag-btn emo" data-tag="#몽환 ">몽환</button>
+              <button class="tag-btn emo" data-tag="#그윽 ">그윽</button>
+              <button class="tag-btn emo" data-tag="#은근 ">은근</button>
+              <button class="tag-btn emo" data-tag="#몽롱 ">몽롱</button>
+              <button class="tag-btn emo" data-tag="#아득 ">아득</button>
+              <button class="tag-btn emo" data-tag="#고즈넉 ">고즈넉</button>
+              <button class="tag-btn emo" data-tag="#아련 ">아련</button>
+              <button class="tag-btn emo" data-tag="#극적 ">극적</button>
+              <button class="tag-btn emo" data-tag="#애절 ">애절</button>
+              <button class="tag-btn emo" data-tag="#비장 ">비장</button>
+              <button class="tag-btn emo" data-tag="#장엄 ">장엄</button>
             </div>
             <div class="tag-actions-inline">
               <button class="tag-action-btn" id="clear-emo-selection">모두 해제</button>
             </div>
           </div>
         </div>
-        <textarea id="editor" placeholder="읽을 내용을 입력하세요. [쉼] 으로 0.5초 정지, [강] 으로 강조할 수 있어요."></textarea>
+        <textarea id="editor" placeholder="읽을 내용을 입력하세요. #쉼, #강 같은 태그는 연출 프롬프트로만 쓰이고 음성으로 읽히지 않아요."></textarea>
         <div class="editor-footer">
           <span><strong id="char-count">0</strong> / 2,000자</span>
           <span>예상 길이 약 <strong id="duration">0</strong>초</span>
@@ -15871,7 +15876,7 @@
     <!-- ================ PAGE: LIBRARY ================ -->
     <section id="page-library" class="page">
       <div class="page-head">
-        <h1>Decision Library</h1>
+        <h1>결과 보관</h1>
         <p>모든 결과물은 의사결정의 흔적입니다. 채택·후보·탈락을 기록해 다음 작업의 자산으로 만드세요.</p>
       </div>
 
@@ -15898,6 +15903,10 @@
           보관 <span class="dec-count" id="dec-count-archived">0</span>
         </button>
         <span style="flex:1"></span>
+        <button class="dec-tab" type="button" onclick="showPage('memory-graph')">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="12" cy="18" r="2"/><path d="M8 7h8M7 8l4 8M17 8l-4 8"/></svg>
+          메모리 그래프
+        </button>
         <span style="font-size:11px;color:var(--text-faint);padding:0 8px">
           ⓘ Compare Mode에서 베스트 고르면 자동 채택됩니다
         </span>
@@ -16258,6 +16267,10 @@
               <svg class="icon" viewBox="0 0 24 24"><path d="M4 5h7v6H4z"/><path d="M13 13h7v6h-7z"/><path d="M11 8h3a2 2 0 0 1 2 2v3"/></svg>
               스토리보드 열기
             </button>
+            <button class="td-command-btn" data-today-page="production-log">
+              <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              제작 로그
+            </button>
           </div>
         </div>
 
@@ -16296,12 +16309,12 @@
       <div class="td-quick-lanes" aria-label="빠른 제작 메뉴">
         <button class="td-lane-btn" data-today-page="personas">
           <svg class="icon" viewBox="0 0 24 24"><path d="M4 19.5V5a2 2 0 0 1 2-2h11l3 3v13.5a1.5 1.5 0 0 1-1.5 1.5H6a2 2 0 0 1-2-1.5z"/><path d="M8 8h6"/><path d="M8 12h8"/></svg>
-          Personas
+          기획/스토리
           <small>세계관과 대본</small>
         </button>
         <button class="td-lane-btn" data-today-page="pipeline">
           <svg class="icon" viewBox="0 0 24 24"><path d="M4 4h6v6H4z"/><path d="M14 4h6v6h-6z"/><path d="M4 14h6v6H4z"/><path d="M10 7h4"/><path d="M7 10v4"/></svg>
-          Pipeline
+          샷 리스트
           <small>Episode · Scene · Shot</small>
         </button>
         <button class="td-lane-btn" data-today-page="voice-studio">
@@ -16398,8 +16411,8 @@
           </div>
           <ul style="list-style:none;padding:0;margin:0;font-size:13px;color:var(--text-dim);line-height:1.85">
             <li>📝 <a href="javascript:showPage('personas')" style="color:var(--accent)">대본 만들기</a> 새 작품 시작</li>
-            <li>🎙 <a href="javascript:showPage('voice-studio')" style="color:var(--accent)">Voice Studio</a> 페르소나 보이스 테스트</li>
-            <li>🎲 <a href="javascript:showPage('music-studio')" style="color:var(--accent)">Music Studio</a> 분위기 음악 굴리기</li>
+            <li>🎙 <a href="javascript:showPage('voice-studio')" style="color:var(--accent)">내레이션/TTS</a> 페르소나 보이스 테스트</li>
+            <li>🎲 <a href="javascript:showPage('music-studio')" style="color:var(--accent)">음악 제작</a> 분위기 음악 굴리기</li>
           </ul>
         </article>
 
@@ -16434,15 +16447,7 @@
         </a>
         <a class="pl-quick-pill" href="javascript:showPage('styles')" title="스타일 룩북으로 이동">
           <span style="font-size:16px">🎨</span>
-          <span>Styles <strong id="pl-stat-st">0</strong></span>
-        </a>
-        <a class="pl-quick-pill" href="javascript:showPage('cinema')" title="Cinema Library로 이동">
-          <span style="font-size:16px">🎞</span>
-          <span>References <strong id="pl-stat-ref">0</strong></span>
-        </a>
-        <a class="pl-quick-pill" href="javascript:showPage('compare')" title="Compare Mode로 이동">
-          <span style="font-size:16px">⚖️</span>
-          <span>Compare <strong id="pl-stat-cmp">0</strong></span>
+          <span>Lookbook & Refs <strong id="pl-stat-st">0</strong></span>
         </a>
         <span class="pl-quick-spacer"></span>
         <a class="pl-quick-pill primary" href="javascript:showPage('personas')" title="페르소나에서 새 스토리 시작 → Pipeline 자동 분해">
@@ -16627,9 +16632,6 @@
           <button class="ch-action-btn" id="ch-random-btn">🎲 랜덤 생성</button>
           <button class="ch-action-btn" id="ch-pack-btn">Prompt Pack 복사</button>
           <button class="ch-action-btn" id="ch-relmap-btn">관계 맵</button>
-          <button class="ch-action-btn" id="ch-export-btn">Export JSON</button>
-          <button class="ch-action-btn" id="ch-import-btn">Import JSON</button>
-          <input id="ch-import-input" type="file" accept="application/json,.json" hidden />
         </div>
       </div>
       <div id="ch-metrics" class="ch-metrics"></div>
@@ -16641,14 +16643,15 @@
     <!-- ================ PAGE: STYLES (v3 M2) ================ -->
     <section id="page-styles" class="page">
       <div class="page-head">
-        <h1>Style Bible · 룩북</h1>
-        <p>컬러 팔레트·카메라·라이팅·무드를 프리셋으로 저장 → 모든 Shot에 일관 적용.</p>
+        <h1>룩북 & 레퍼런스</h1>
+        <p>컬러 팔레트·카메라·라이팅·무드와 참고 영상을 한곳에서 정리해 모든 Shot에 일관 적용합니다.</p>
       </div>
       <div class="bible-toolbar">
         <select id="st-project-select" class="pl-edit-input" style="max-width:240px">
           <option value="">전 프로젝트</option>
         </select>
         <button class="pl-btn primary" id="st-add-btn">＋ 새 스타일</button>
+        <button class="pl-btn" onclick="showPage('cinema')">🎞 영상 레퍼런스</button>
         <span id="st-stats" style="margin-left:auto;font-size:11px;color:var(--text-faint)"></span>
       </div>
       <div class="bible-grid" id="st-grid"></div>
@@ -16681,7 +16684,7 @@
     <!-- ================ PAGE: PROJECT ARCHIVE (프로젝트 라이브러리) ================ -->
     <section id="page-project-archive" class="page">
       <div class="page-head">
-        <h1>프로젝트 라이브러리</h1>
+        <h1>최종 출력</h1>
         <p>완료된 프로젝트가 보관되는 곳입니다. 언제든 복원하거나 영구 삭제할 수 있어요.</p>
       </div>
 
@@ -16707,7 +16710,7 @@
     <!-- ================ PAGE: MEMORY GRAPH ================ -->
     <section id="page-memory-graph" class="page">
       <div class="page-head">
-        <h1>Memory Graph</h1>
+        <h1>메모리 그래프</h1>
         <p>샷마다 자동으로 임베딩이 생성되어, 새 샷 작성 시 비슷한 채택 샷을 자동 추천합니다. 작업물이 누적될수록 추천이 정확해집니다 — 복리 효과.</p>
       </div>
 
@@ -16908,7 +16911,7 @@
     <!-- ================ PAGE: SETTINGS ================ -->
     <section id="page-settings" class="page">
       <div class="page-head">
-        <h1>Settings</h1>
+        <h1>설정</h1>
         <p>계정, 워크스페이스, API, 저장소, 결제 설정을 관리하세요.</p>
       </div>
 
@@ -16997,6 +17000,14 @@
           <h3>Storage</h3>
           <p>로컬 라이브러리, 결과물 보관 정책</p>
           <button class="settings-cta" id="storage-manage-btn">관리</button>
+        </article>
+        <article class="settings-card" id="settings-memory-card">
+          <div class="settings-icon">
+            <svg class="icon" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.2"/><circle cx="18" cy="6" r="2.2"/><circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="18" r="2.2"/><path d="M8 6h8M6 8v8M18 8v8M8 18h8"/></svg>
+          </div>
+          <h3>Advanced Memory</h3>
+          <p>유사 샷 추천, 채택 샷 통계, 모델별 사용 패턴</p>
+          <button class="settings-cta" id="memory-open-btn" type="button" onclick="showPage('memory-graph')">열기</button>
         </article>
         <article class="settings-card" id="settings-billing-card">
           <div class="settings-icon">
@@ -17184,7 +17195,7 @@
     <!-- ================ PAGE: HISTORY ================ -->
     <section id="page-history" class="page">
       <div class="page-head">
-        <h1>Production Log</h1>
+        <h1>제작 로그</h1>
         <p>오늘 만든 작업과 날짜별 제작 기록을 확인하세요.</p>
       </div>
       <div id="history-page-list" class="lib-grid"></div>
@@ -17257,7 +17268,7 @@
       <div class="vid-hero">
         <div class="vid-hero-main">
           <div class="vid-kicker">2026.04.27 · Video Model Router</div>
-          <h1 class="vid-hero-title">Video Studio</h1>
+          <h1 class="vid-hero-title">영상 생성</h1>
           <p class="vid-hero-copy">
             Sora 2 Pro, Veo 3.1, Runway Gen-4.5, Luma Ray 2, Hailuo 2.3까지 한 화면에서 비교하고,
             텍스트·이미지·키프레임·오디오 기반 제작 흐름을 선택하세요.
@@ -17267,6 +17278,7 @@
             <span class="vid-hero-chip">Image / Keyframes</span>
             <span class="vid-hero-chip">Native Audio</span>
             <span class="vid-hero-chip">Commercial-safe lane</span>
+            <button class="vid-hero-chip" type="button" onclick="showPage('compare')">컷 비교</button>
           </div>
         </div>
         <div class="vid-hero-panel">
@@ -17888,26 +17900,20 @@ window.addEventListener('unhandledrejection', (ev) => {
 
 /* ---------------- Sidebar toggle ---------------- */
 const layoutEl = document.querySelector('.layout');
+const SIDEBAR_STATE_KEY = 'soaviz.sidebar.hidden.v1';
 function applySidebarInitial() {
-  // 기본: 넓은 화면 열림, 좁으면 닫힘
-  if (window.innerWidth < 880) {
-    layoutEl.classList.add('sidebar-collapsed');
-  } else {
-    layoutEl.classList.remove('sidebar-collapsed');
-  }
+  const shouldHide = localStorage.getItem(SIDEBAR_STATE_KEY) === '1';
+  layoutEl.classList.toggle('sidebar-collapsed', shouldHide);
+  document.body.classList.remove('sidebar-open');
 }
 applySidebarInitial();
 
 $('#sidebar-toggle').addEventListener('click', () => {
-  // 아주 좁은 모바일에서는 body 클래스로 오버레이 모드
-  if (window.innerWidth <= 620) {
-    document.body.classList.toggle('sidebar-open');
-  } else {
-    layoutEl.classList.toggle('sidebar-collapsed');
-  }
+  layoutEl.classList.toggle('sidebar-collapsed');
+  localStorage.setItem(SIDEBAR_STATE_KEY, layoutEl.classList.contains('sidebar-collapsed') ? '1' : '0');
 });
 
-// 오버레이 모드에서 배경(dim) 클릭 시 닫힘
+// 구버전 오버레이 상태가 남아 있으면 정리
 document.addEventListener('click', (e) => {
   if (!document.body.classList.contains('sidebar-open')) return;
   if (e.target.closest('.sidebar') || e.target.closest('#sidebar-toggle')) return;
@@ -17916,9 +17922,7 @@ document.addEventListener('click', (e) => {
 
 // 리사이즈 시 모드 전환
 window.addEventListener('resize', () => {
-  if (window.innerWidth > 620) {
-    document.body.classList.remove('sidebar-open');
-  }
+  document.body.classList.remove('sidebar-open');
 });
 
 /* ---------------- Page routing ---------------- */
@@ -18918,7 +18922,7 @@ function _renderCreditPill(el) {
 /** 제작/생성 탭에만 pill 노출 — 비-제작 탭은 제외 */
 const _CREDIT_PILL_PAGES = new Set([
   'voice-studio','music-studio','sfx-studio','video-studio',
-  'transcript','personas','pipeline','characters','styles','cinema',
+  'transcript','personas','pipeline','styles','cinema',
   'compare','memory-graph','clean','effects','voices','studio'
 ]);
 
@@ -22447,7 +22451,7 @@ function bindSettingsPage() {
   $('#settings-billing-card')?.addEventListener('dblclick', () => openBillingModal());
   // 혹시 새 카드가 추가되었는데 핸들러가 없으면 안내만 표시
   $$('.settings-cta').forEach(b => {
-    if (['acc-manage-btn','ws-manage-btn','storage-manage-btn','billing-manage-btn'].includes(b.id)) return;
+    if (['acc-manage-btn','ws-manage-btn','storage-manage-btn','billing-manage-btn','memory-open-btn'].includes(b.id)) return;
     b.addEventListener('click', () => showToast(`${b.closest('.settings-card')?.querySelector('h3')?.textContent || ''} 설정 패널이 아직 연결되지 않았습니다`, 'warn'));
   });
   // 카드 요약 텍스트 갱신
@@ -29126,8 +29130,17 @@ $('#personas-submit')?.addEventListener('click', () => {
 document.addEventListener('click', () => $('#persona-menu').classList.remove('open'));
 
 const editor = $('#editor');
+function sanitizeTtsText(raw) {
+  return String(raw || '')
+    .replace(/#[^\s#]+/g, ' ')
+    .replace(/\[[^\]\n]{1,24}\]/g, ' ')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/[ \t]{2,}/g, ' ')
+    .trim();
+}
 function updateEditor() {
-  const len = editor.value.length;
+  const len = sanitizeTtsText(editor.value).length;
   $('#char-count').textContent = len.toLocaleString();
   const speed = parseInt($('#speed').value, 10) / 100;
   $('#duration').textContent = Math.max(0, Math.round(len / (KR_CPS * speed)));
@@ -29146,7 +29159,7 @@ function _ttsCostFor(text) {
 function refreshTtsCreditBar() {
   const bar = document.getElementById('tts-credit-bar');
   if (!bar) return;
-  const cost = _ttsCostFor(editor?.value || '');
+  const cost = _ttsCostFor(sanitizeTtsText(editor?.value || ''));
   const balance = (typeof getCreditBalance === 'function') ? getCreditBalance() : null;
   const total = balance?.total || 0;
   const remaining = balance?.remaining ?? 0;
@@ -29176,9 +29189,11 @@ $$('.tag-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const tag = btn.dataset.tag;
     const s = editor.selectionStart, e = editor.selectionEnd, v = editor.value;
-    editor.value = v.slice(0, s) + tag + v.slice(e);
+    const needsLeadSpace = s > 0 && !/\s/.test(v.charAt(s - 1));
+    const insert = (needsLeadSpace ? ' ' : '') + tag;
+    editor.value = v.slice(0, s) + insert + v.slice(e);
     editor.focus();
-    editor.setSelectionRange(s + tag.length, s + tag.length);
+    editor.setSelectionRange(s + insert.length, s + insert.length);
     updateEditor();
     // 다중 선택 토글 — 여러 태그 동시에 흰 테두리 유지 가능
     btn.classList.toggle('selected');
@@ -29302,7 +29317,8 @@ function togglePlayHistory(el, idx) {
 }
 
 $('#generate').addEventListener('click', async () => {
-  const text = editor.value.trim();
+  const rawText = editor.value.trim();
+  const text = sanitizeTtsText(rawText);
   if (!text) { showToast('먼저 읽을 내용을 입력해 주세요', 'error'); editor.focus(); return; }
   if (text.length > 2000) { showToast('2,000자를 초과했어요', 'error'); return; }
   const ttsCost = _ttsCostFor(text);
@@ -33498,7 +33514,6 @@ function openWorkflowBuilder() {
           <span style="font-size:18px">⚙</span>
           <h3>커스텀 워크플로우 빌더 <span style="font-size:10px;color:var(--accent);background:var(--accent-soft);padding:2px 7px;border-radius:999px;margin-left:6px;font-weight:700;letter-spacing:0.04em">V2</span></h3>
           <div style="display:flex;gap:6px;margin-right:8px">
-            <button class="vault-btn" id="wf-ai" title="한 줄 묘사로 AI가 워크플로우 자동 생성">✨ AI 생성</button>
             <button class="vault-btn" id="wf-gallery" title="템플릿 갤러리에서 시작">🎨 갤러리</button>
             <button class="vault-btn" id="wf-import" title="JSON 파일에서 가져오기">📥 Import</button>
             <button class="vault-btn" id="wf-export" title="현재 워크플로우 JSON으로 내보내기" ${!wf ? 'disabled' : ''}>📤 Export</button>
@@ -33731,18 +33746,7 @@ function openWorkflowBuilder() {
       showToast?.('🗑 삭제됨');
     });
 
-    // ─── V2 액션: AI 생성 / 갤러리 / Import / Export ───
-    root.querySelector('#wf-ai')?.addEventListener('click', async () => {
-      const brief = prompt('어떤 작업의 워크플로우를 만들까요?\n예: "1주일 짜리 인스타 광고 시안 5개 동시 비교", "단편 영화 제작 풀파이프"');
-      if (!brief) return;
-      showToast?.('✨ AI가 워크플로우를 생성하는 중…');
-      try {
-        const wf = await SoavizWorkflow.generateFromBrief(brief);
-        if (wf) { editingId = wf.id; render(); showToast?.(`✓ "${wf.name}" 생성됨`); }
-      } catch (e) {
-        showToast?.(`AI 생성 실패: ${e.message}`, 'error');
-      }
-    });
+    // ─── V2 액션: 갤러리 / Import / Export ───
     root.querySelector('#wf-gallery')?.addEventListener('click', () => {
       // 인라인 갤러리 모달
       const galWrap = document.createElement('div');
@@ -36256,7 +36260,6 @@ function renderCharacterBulkbar() {
     <button class="ch-action-btn" data-ch-bulk="copy">Cast Pack 복사</button>
     <button class="ch-action-btn" data-ch-bulk="assign">Shot에 일괄 연결</button>
     <button class="ch-action-btn" data-ch-bulk="fragment">Fragment 자동정리</button>
-    <button class="ch-action-btn" data-ch-bulk="export">선택 Export</button>
     <button class="ch-action-btn danger" data-ch-bulk="clear">선택 해제</button>
   `;
 }
@@ -37492,12 +37495,6 @@ function bindCharactersPage() {
   $('#ch-random-btn')?.addEventListener('click', () => createRandomCharacterQuick());
   $('#ch-pack-btn')?.addEventListener('click', () => copyCharacterPromptPack());
   $('#ch-relmap-btn')?.addEventListener('click', () => openCharacterRelationMap());
-  $('#ch-export-btn')?.addEventListener('click', () => exportCharactersJSON());
-  $('#ch-import-btn')?.addEventListener('click', () => $('#ch-import-input')?.click());
-  $('#ch-import-input')?.addEventListener('change', e => {
-    importCharactersJSON(e.target.files?.[0]);
-    e.target.value = '';
-  });
   $('#ch-grid')?.addEventListener('click', async e => {
     const btn = e.target.closest('[data-ch-action]');
     if (!btn) return;
@@ -37543,8 +37540,6 @@ function bindCharactersPage() {
       await openCharacterBatchAssignModal();
     } else if (action === 'fragment') {
       await autoBuildSelectedFragments();
-    } else if (action === 'export') {
-      await exportSelectedCharactersJSON();
     } else if (action === 'clear') {
       CHARACTER_PAGE_STATE.selected.clear();
       renderCharactersPage();
@@ -39197,7 +39192,7 @@ async function renderCinemaPlayer() {
       <svg class="icon" viewBox="0 0 24 24" style="width:40px;height:40px;color:var(--accent);opacity:0.4">
         <rect x="2" y="2" width="20" height="20" rx="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/>
       </svg>
-      <h3>Cinema Library</h3>
+      <h3>레퍼런스</h3>
       <p>좌측에서 영상을 추가하면 임베드 플레이어가 표시됩니다.</p>
     </div>`;
     return;
@@ -40312,12 +40307,11 @@ window.svErrorBoundary = function (renderFn, containerId) {
     { id: 'video',      label: 'Video Studio',    keywords: 'video 영상',         icon: '🎬', page: 'video-studio' },
     { id: 'compare',    label: 'Compare Mode',    keywords: 'compare 비교',       icon: '⚖️', page: 'compare' },
     { id: 'characters', label: '캐릭터 페르소나', keywords: 'characters bible 캐릭터 페르소나 persona', icon: '👤', page: 'characters' },
-    { id: 'styles',     label: 'Style Bible',     keywords: 'styles bible 룩북 스타일',   icon: '🎨', page: 'styles' },
-    { id: 'cinema',     label: 'Cinema Library',  keywords: 'cinema 시네마 reference 참고', icon: '🎞', page: 'cinema' },
+    { id: 'styles',     label: '룩북 & 레퍼런스', keywords: 'styles bible 룩북 스타일 reference 참고', icon: '🎨', page: 'styles' },
+    { id: 'cinema',     label: '영상 레퍼런스',    keywords: 'cinema 시네마 reference 참고', icon: '🎞', page: 'cinema' },
     { id: 'library',    label: 'Library',         keywords: 'library 라이브러리',  icon: '📚', page: 'library' },
     { id: 'extract',    label: 'Transcript',      keywords: 'transcript 자막 추출',icon: '📝', page: 'transcript' },
     { id: 'history',    label: 'Production Log',  keywords: 'history 활동 로그',   icon: '📊', page: 'production-log' },
-    { id: 'clean',      label: 'Voice Isolator',  keywords: 'isolator clean 보컬 분리', icon: '🎚', page: 'clean' },
     { id: 'voices',     label: 'Voices Library',  keywords: 'voices 보이스',       icon: '🗣', page: 'voices' },
     { id: 'settings',   label: 'Settings',        keywords: 'settings 설정',       icon: '⚙', page: 'settings' },
   ];
@@ -40600,7 +40594,7 @@ window.svErrorBoundary = function (renderFn, containerId) {
 
 /* ---------------- Init ---------------- */
 renderPersonaMenu();
-editor.value = '사월의 바람이 창문을 지나 [쉼] 낯선 이름을 조용히 부른다. 나는 그 목소리를 [강]정확히[강] 기억한다.';
+editor.value = '사월의 바람이 창문을 지나 #쉼 낯선 이름을 조용히 부른다. 나는 그 목소리를 #강 정확히 #강 기억한다.';
 updateEditor();
 renderHistory();
 bindMiniPlayer();
@@ -40739,7 +40733,7 @@ setInterval(checkBackend, 20000);
             <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
             <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
           </svg>
-          Documentation
+          사용자 가이드
           <span class="sub">· 사용자 가이드</span>
         </div>
         <div class="sv-docs-actions">
@@ -40781,6 +40775,14 @@ setInterval(checkBackend, 20000);
   document.querySelectorAll('a[href="docs/index.html"]').forEach(a => {
     a.addEventListener('click', (e) => { e.preventDefault(); openDocs(); });
   });
+  try {
+    const params = new URLSearchParams(location.search);
+    if (params.get('docs') === '1') {
+      const hash = location.hash ? location.hash.slice(1) : '';
+      openDocs(hash);
+      history.replaceState(null, '', 'index.html');
+    }
+  } catch (_) {}
 
   // 닫기 — ✕ / ESC / 배경 클릭
   document.getElementById('sv-docs-close')?.addEventListener('click', closeDocs);

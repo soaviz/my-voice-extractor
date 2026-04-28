@@ -5,6 +5,18 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>soaviz studio · 사용자 가이드</title>
 <meta name="description" content="soaviz studio — AI로 영상 만드는 가장 쉬운 방법. 가이드, 요금제, 자주 묻는 질문." />
+<script>
+  (() => {
+    try {
+      const params = new URLSearchParams(location.search);
+      const isEmbed = params.get('embed') === '1';
+      if (!isEmbed) {
+        const hash = location.hash || '#introduction';
+        location.replace(`../index.html?docs=1${hash}`);
+      }
+    } catch (_) {}
+  })();
+</script>
 <style>
   :root {
     --bg:#08080C; --bg-soft:#0B0B11; --bg-elev:#11111A;
@@ -87,8 +99,8 @@
   .doc-actions button{padding:6px 12px;height:30px;background:var(--bg-elev);border:1px solid var(--border-strong);border-radius:6px;color:var(--text-dim);font-size:12px;display:inline-flex;align-items:center;gap:6px;transition:all var(--t-fast)}
   .doc-actions button:hover{color:var(--accent);border-color:var(--accent-strong)}
 
-  .hero{margin:24px 0 36px;aspect-ratio:16/6;border-radius:var(--r-xl);background:radial-gradient(80% 80% at 30% 50%,rgba(167,139,250,0.45),transparent 70%),radial-gradient(80% 80% at 75% 60%,rgba(34,211,238,0.30),transparent 70%),radial-gradient(60% 80% at 50% 100%,rgba(129,140,248,0.30),transparent 70%),linear-gradient(135deg,#1a1a3a 0%,#0f0f1f 100%);overflow:hidden;position:relative;border:1px solid var(--border);box-shadow:var(--shadow)}
-  .hero svg{position:absolute;inset:0;width:100%;height:100%;opacity:0.85}
+  .hero{margin:24px 0 36px;aspect-ratio:3/2;border-radius:var(--r-xl);overflow:hidden;position:relative;border:1px solid var(--border);box-shadow:var(--shadow);background:#0b0818}
+  .hero img{display:block;width:100%;height:100%;object-fit:cover}
 
   h2{font-size:24px;font-weight:700;letter-spacing:-0.01em;margin:36px 0 14px;color:var(--text);scroll-margin-top:80px}
   h3{font-size:17px;font-weight:600;margin:28px 0 10px;color:var(--text)}
@@ -537,18 +549,7 @@
       </div>
 
       <div class="hero">
-        <svg viewBox="0 0 800 300" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
-          <defs>
-            <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.9"/>
-              <stop offset="50%" stop-color="#22d3ee" stop-opacity="0.7"/>
-              <stop offset="100%" stop-color="#818cf8" stop-opacity="0.9"/>
-            </linearGradient>
-          </defs>
-          <path d="M0,150 Q200,80 400,150 T800,150" stroke="url(#g1)" stroke-width="40" fill="none" opacity="0.8"/>
-          <path d="M0,180 Q200,110 400,180 T800,180" stroke="#fff" stroke-width="20" fill="none" opacity="0.3"/>
-          <path d="M0,120 Q200,50 400,120 T800,120" stroke="#fff" stroke-width="2" fill="none" opacity="0.3"/>
-        </svg>
+        <img src="../image/user-guide-hero.png" alt="soaviz studio 사용자 가이드 소개 이미지">
       </div>
 
       <h2>soaviz studio가 도와드리는 일</h2>
