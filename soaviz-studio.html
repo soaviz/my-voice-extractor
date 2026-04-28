@@ -17467,8 +17467,12 @@
    soaviz studio — end-to-end prototype
    ============================================================= */
 // Runtime config — production은 window.__SOAVIZ_CONFIG__.backendUrl 우선
+const DEFAULT_BACKEND_URL = (typeof location !== 'undefined'
+  && (location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.hostname === '::1'))
+  ? 'http://127.0.0.1:8787'
+  : '';
 const BACKEND_URL = (typeof window !== 'undefined' && window.__SOAVIZ_CONFIG__?.backendUrl)
-  || 'http://127.0.0.1:8787';
+  || DEFAULT_BACKEND_URL;
 
 /* ──────────────────────────────────────────────────────────────
    장르 50개 + 분위기·톤 50개 — 세계관·스토리텔링 공통 카탈로그
@@ -30875,6 +30879,16 @@ function providerIcon(provider = '') {
 
 async function loadVideoModels() {
   try {
+    if (!BACKEND_URL) {
+      VIDEO_STATE.models = VIDEO_FALLBACK_MODELS;
+      VIDEO_STATE.features = VIDEO_FALLBACK_FEATURES;
+      renderVideoFeatureList();
+      renderVideoModelFilters();
+      renderVideoModelList();
+      renderVideoHeroStats();
+      syncVideoModelDisplay();
+      return;
+    }
     const r = await fetch(`${BACKEND_URL}/api/video/models`);
     if (!r.ok) throw new Error(`models 실패 ${r.status}`);
     const d = await r.json();
@@ -40088,10 +40102,11 @@ ${clips.map((c, i) => `          <clipitem id="clip_${i}">
   }
 
   async function probeBackend() {
+    if (!BACKEND_URL) return { online: false, reason: 'not-configured' };
     try {
       const ctrl = new AbortController();
       setTimeout(() => ctrl.abort(), 2500);
-      const r = await fetch(`${BACKEND_URL || 'http://localhost:8000'}/api/health`, { signal: ctrl.signal });
+      const r = await fetch(`${BACKEND_URL}/api/health`, { signal: ctrl.signal });
       if (!r.ok) return { online: false, reason: 'http ' + r.status };
       const d = await r.json();
       return { online: !!d.ok, checks: d.checks || {} };
