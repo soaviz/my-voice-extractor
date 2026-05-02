@@ -18947,6 +18947,139 @@
       background: rgba(167,139,250,0.08);
       box-shadow: 0 0 0 1px rgba(167,139,250,0.20);
     }
+
+    /* 7차 — Timeline Player */
+    .mobile-timeline-player {
+      background: #0d0d12;
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 12px;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .mobile-timeline-stage {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .mobile-timeline-stage.fit .mobile-timeline-media {
+      max-width: 100%; max-height: 100%;
+      object-fit: contain;
+    }
+    .mobile-timeline-stage.fill .mobile-timeline-media {
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+    .mobile-timeline-media {
+      display: block;
+      max-width: 100%;
+      max-height: 100%;
+    }
+    .mobile-timeline-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: rgba(255,255,255,0.3);
+      font-size: 13px;
+      width: 100%;
+      height: 100%;
+    }
+    .mobile-timeline-player-info {
+      padding: 10px 14px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* 7차 — Timeline Cut Card */
+    .mobile-timeline-cut-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 10px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin-bottom: 8px;
+      transition: border-color 0.15s;
+    }
+    .mobile-timeline-cut-card.active {
+      border-color: rgba(167,139,250,0.5);
+      background: rgba(167,139,250,0.07);
+    }
+    .mobile-timeline-cut-card.has-asset .mobile-timeline-cut-thumb {
+      border-color: rgba(167,139,250,0.3);
+    }
+    .mobile-timeline-cut-card.missing-asset .mobile-timeline-cut-thumb {
+      border-color: rgba(239,68,68,0.35);
+      background: rgba(239,68,68,0.07);
+    }
+    .mobile-timeline-cut-thumb {
+      width: 64px;
+      height: 40px;
+      border-radius: 7px;
+      border: 1px solid rgba(255,255,255,0.1);
+      overflow: hidden;
+      flex-shrink: 0;
+      background: rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    .mobile-timeline-cut-thumb img,
+    .mobile-timeline-cut-thumb video {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .mobile-timeline-cut-body {
+      flex: 1;
+      min-width: 0;
+    }
+    .mobile-mini-badge.warning {
+      background: rgba(239,68,68,0.18);
+      color: #f87171;
+      border: 1px solid rgba(239,68,68,0.3);
+      border-radius: 6px;
+      padding: 1px 6px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+    .mobile-inline-field {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+    .mobile-inline-field label {
+      font-size: 11px;
+      color: rgba(255,255,255,0.4);
+      white-space: nowrap;
+    }
+    .mobile-select.compact {
+      padding: 3px 7px;
+      font-size: 11px;
+      height: 26px;
+      border-radius: 7px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.85);
+    }
+    .mobile-secondary-btn[disabled] {
+      opacity: 0.35;
+      pointer-events: none;
+    }
   }
   @media (min-width: 769px) {
     #mobile-app-shell { display: none !important; }
@@ -51420,6 +51553,16 @@ MobileState.generationQueue = MobileState.generationQueue || {
   selectedShotIds: [],
   isRestoring: false
 };
+MobileState.timeline = MobileState.timeline || {
+  playMode: false,
+  currentIndex: 0,
+  isPlaying: false,
+  selectedCutId: null,
+  exportFormat: 'json',
+  previewScale: 'fit',
+  defaultDurationSec: 5,
+  defaultTransition: 'cut'
+};
 
 /* ────────────────────────────────────────────────────────────
    § 2. 모델 / 앵글 설정
@@ -51545,6 +51688,8 @@ const MobileApp = (() => {
 
   function go(name) {
     current = name;
+    // 화면 전환 시 타임라인 재생 중단
+    if (name !== 'production') { if (typeof stopMobileTimelinePlayback === 'function') stopMobileTimelinePlayback(); }
     // 화면 전환 시 캐릭터 시트 step flow 초기화
     if (name !== 'character') MobileState.characterMode = 'home';
     document.querySelectorAll('.mobile-screen').forEach(screen => {
@@ -52392,7 +52537,9 @@ async function ensureMobileCurrentProject() {
     return null;
   }
 }
-async function createMobileProject(input = {}) {
+async function createMobileProject(input) {
+  input = input || {};
+  if (typeof stopMobileTimelinePlayback === 'function') stopMobileTimelinePlayback();
   try {
     if (!window.SoavizDB?.db?.projects) {
       if (typeof showToast === 'function') showToast('projects 테이블을 찾을 수 없습니다', 'error');
@@ -52429,6 +52576,7 @@ async function createMobileProject(input = {}) {
 }
 async function selectMobileProject(projectId) {
   if (!projectId) return;
+  if (typeof stopMobileTimelinePlayback === 'function') stopMobileTimelinePlayback();
   MobileState.currentProjectId = projectId;
   if (typeof saveMobileRuntimeState === 'function') saveMobileRuntimeState();
   if (window.SoavizPipeline?.setProject) {
@@ -52489,8 +52637,21 @@ async function getMobilePipelineBundle(projectId) {
     }
     if (SoavizDB.db.assets) {
       const allAssets = await SoavizDB.db.assets.toArray().catch(() => []);
-      bundle.assets = allAssets.filter(a => !a.archived && a.projectId === projectId);
+      bundle.assets = allAssets.filter(a => !a.archived && a.projectId === projectId && a.type !== 'generation-job');
     }
+    // 7차: shots 정렬 보장 (order → sortOrder → number → id)
+    bundle.shots.sort((a, b) => {
+      const aScene = String(a.sceneId || '');
+      const bScene = String(b.sceneId || '');
+      if (aScene !== bScene) {
+        const sc = aScene.localeCompare(bScene);
+        if (sc !== 0) return sc;
+      }
+      const av = Number(a.order ?? a.sortOrder ?? a.number ?? 0);
+      const bv = Number(b.order ?? b.sortOrder ?? b.number ?? 0);
+      if (av !== bv) return av - bv;
+      return String(a.id || '').localeCompare(String(b.id || ''));
+    });
     return bundle;
   } catch (e) {
     console.warn('[mobile] getMobilePipelineBundle failed', e);
@@ -52786,6 +52947,9 @@ function renderMobileExportPanel(bundle) {
 function bindMobileProductionEvents(root, bundle) {
   root.querySelectorAll('[data-prod-view]').forEach(btn => {
     btn.addEventListener('click', () => {
+      if (btn.dataset.prodView !== 'timeline') {
+        if (typeof stopMobileTimelinePlayback === 'function') stopMobileTimelinePlayback();
+      }
       MobileState.productionView = btn.dataset.prodView;
       if (typeof saveMobileRuntimeState === 'function') saveMobileRuntimeState();
       renderMobileProduction();
@@ -52896,6 +53060,126 @@ function bindMobileProductionEvents(root, bundle) {
       toggleMobileBatchShot(btn.dataset.batchSelect);
     });
   });
+  // 7차: Timeline 이벤트
+  const timelineCuts = (typeof buildMobileTimelineCuts === 'function')
+    ? buildMobileTimelineCuts(bundle) : [];
+  root.querySelector('#mobile-timeline-start-story')?.addEventListener('click', () => {
+    if (typeof stopMobileTimelinePlayback === 'function') stopMobileTimelinePlayback();
+    MobileApp.go('story');
+  });
+  root.querySelector('#mobile-timeline-refresh')?.addEventListener('click', () => {
+    if (typeof renderMobileProduction === 'function') renderMobileProduction();
+  });
+  root.querySelector('#mobile-timeline-prev')?.addEventListener('click', () => {
+    if (typeof stopMobileTimelinePlayback === 'function') stopMobileTimelinePlayback();
+    MobileState.timeline.currentIndex = Math.max(0, Number(MobileState.timeline.currentIndex || 0) - 1);
+    if (typeof saveMobileRuntimeState === 'function') saveMobileRuntimeState();
+    if (typeof renderMobileProduction === 'function') renderMobileProduction();
+  });
+  root.querySelector('#mobile-timeline-next')?.addEventListener('click', () => {
+    if (typeof stopMobileTimelinePlayback === 'function') stopMobileTimelinePlayback();
+    MobileState.timeline.currentIndex = Math.min(
+      timelineCuts.length - 1,
+      Number(MobileState.timeline.currentIndex || 0) + 1
+    );
+    if (typeof saveMobileRuntimeState === 'function') saveMobileRuntimeState();
+    if (typeof renderMobileProduction === 'function') renderMobileProduction();
+  });
+  root.querySelector('#mobile-timeline-play')?.addEventListener('click', () => {
+    if (MobileState.timeline.isPlaying) {
+      if (typeof stopMobileTimelinePlayback === 'function') stopMobileTimelinePlayback();
+      if (typeof renderMobileProduction === 'function') renderMobileProduction();
+    } else {
+      if (typeof playMobileTimeline === 'function') playMobileTimeline(timelineCuts);
+      if (typeof renderMobileProduction === 'function') renderMobileProduction();
+    }
+  });
+  root.querySelector('#mobile-timeline-scale')?.addEventListener('click', () => {
+    MobileState.timeline.previewScale = MobileState.timeline.previewScale === 'fill' ? 'fit' : 'fill';
+    if (typeof saveMobileRuntimeState === 'function') saveMobileRuntimeState();
+    if (typeof renderMobileProduction === 'function') renderMobileProduction();
+  });
+  root.querySelectorAll('[data-select-cut]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const cutId = btn.dataset.selectCut;
+      const idx   = timelineCuts.findIndex(c => c.id === cutId);
+      MobileState.timeline.selectedCutId = cutId;
+      if (idx >= 0) MobileState.timeline.currentIndex = idx;
+      if (typeof saveMobileRuntimeState === 'function') saveMobileRuntimeState();
+      if (typeof renderMobileProduction === 'function') renderMobileProduction();
+    });
+  });
+  root.querySelectorAll('[data-cut-duration]').forEach(sel => {
+    sel.addEventListener('change', async () => {
+      const n = Number(sel.value);
+      if (typeof updateMobileShotTiming === 'function')
+        await updateMobileShotTiming(sel.dataset.cutDuration, { durationSec: n, duration: n });
+    });
+  });
+  root.querySelectorAll('[data-cut-transition]').forEach(sel => {
+    sel.addEventListener('change', async () => {
+      if (typeof updateMobileShotTiming === 'function')
+        await updateMobileShotTiming(sel.dataset.cutTransition, { transition: sel.value, transitionType: sel.value });
+    });
+  });
+  root.querySelectorAll('[data-move-cut-up]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (typeof moveMobileTimelineCut === 'function')
+        await moveMobileTimelineCut(btn.dataset.moveCutUp, 'up');
+    });
+  });
+  root.querySelectorAll('[data-move-cut-down]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (typeof moveMobileTimelineCut === 'function')
+        await moveMobileTimelineCut(btn.dataset.moveCutDown, 'down');
+    });
+  });
+  root.querySelectorAll('[data-open-shot-from-timeline]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (typeof stopMobileTimelinePlayback === 'function') stopMobileTimelinePlayback();
+      await openMobileShotWorkspace(btn.dataset.openShotFromTimeline, 'image');
+    });
+  });
+  root.querySelectorAll('[data-copy-cut-prompt]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const cut = timelineCuts.find(c => c.shotId === btn.dataset.copyCutPrompt);
+      if (!cut) return;
+      if (typeof copyText === 'function') await copyText(cut.prompt || cut.motionPrompt || '');
+      if (typeof showToast === 'function') showToast('컷 프롬프트 복사 완료');
+    });
+  });
+  root.querySelectorAll('[data-timeline-export-format]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      MobileState.timeline.exportFormat = btn.dataset.timelineExportFormat;
+      if (typeof saveMobileRuntimeState === 'function') saveMobileRuntimeState();
+      if (typeof renderMobileProduction === 'function') renderMobileProduction();
+    });
+  });
+  root.querySelector('#mobile-download-timeline')?.addEventListener('click', () => {
+    const date      = new Date().toISOString().slice(0, 10);
+    const safeTitle = String(bundle.project?.title || 'soaviz-roughcut').replace(/[^\w가-힣-]+/g, '_');
+    const format    = MobileState.timeline.exportFormat || 'json';
+    if (format === 'txt') {
+      const text = buildMobileTimelineExportText(bundle, timelineCuts);
+      if (typeof downloadBlob === 'function') downloadBlob(new Blob([text], { type: 'text/plain;charset=utf-8' }), `soaviz_timeline_${safeTitle}_${date}.txt`);
+    } else if (format === 'edl') {
+      const edl = buildMobileTimelineEDL(bundle, timelineCuts);
+      if (typeof downloadBlob === 'function') downloadBlob(new Blob([edl],  { type: 'text/plain;charset=utf-8' }), `soaviz_timeline_${safeTitle}_${date}.edl`);
+    } else {
+      const payload = buildMobileTimelineExportPayload(bundle, timelineCuts);
+      if (typeof downloadBlob === 'function') downloadBlob(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }), `soaviz_timeline_${safeTitle}_${date}.json`);
+    }
+    if (typeof showToast === 'function') showToast('타임라인 내보내기 완료');
+  });
+  root.querySelector('#mobile-copy-timeline')?.addEventListener('click', async () => {
+    const format = MobileState.timeline.exportFormat || 'json';
+    let text = '';
+    if (format === 'edl')       text = buildMobileTimelineEDL(bundle, timelineCuts);
+    else if (format === 'txt')  text = buildMobileTimelineExportText(bundle, timelineCuts);
+    else                        text = JSON.stringify(buildMobileTimelineExportPayload(bundle, timelineCuts), null, 2);
+    if (typeof copyText === 'function') await copyText(text);
+    if (typeof showToast === 'function') showToast('타임라인 복사 완료');
+  });
 }
 window.bindMobileProductionEvents = bindMobileProductionEvents;
 
@@ -52913,6 +53197,7 @@ window.mobileGenerationModelConfig = mobileGenerationModelConfig;
 
 /* ── 5차: Shot Workspace 진입/종료 ────────────────────────────── */
 async function openMobileShotWorkspace(shotId, mode) {
+  if (typeof stopMobileTimelinePlayback === 'function') stopMobileTimelinePlayback();
   mode = mode || 'image';
   const bundle = await getMobilePipelineBundle(MobileState.currentProjectId);
   const shot   = bundle.shots.find(s => s.id === shotId);
@@ -53703,6 +53988,431 @@ window.toggleMobileBatchShot              = toggleMobileBatchShot;
 window.openMobileBatchGenerationConfirm   = openMobileBatchGenerationConfirm;
 window.enqueueMobileBatchGenerationJobs   = enqueueMobileBatchGenerationJobs;
 
+/* ── 7차: Timeline 데이터 빌더 ────────────────────────────────── */
+function getAssetUrl(asset) {
+  return asset?.url || asset?.imageUrl || asset?.videoUrl || asset?.thumbUrl || '';
+}
+function getAssetKind(asset) {
+  if (!asset) return 'empty';
+  if (asset.type === 'video' || asset.videoUrl) return 'video';
+  if (asset.type === 'image' || asset.imageUrl || asset.url) return 'image';
+  if (asset.type === 'prompt' || asset.type === 'shot-prompt') return 'prompt';
+  return asset.type || 'asset';
+}
+function findAssetById(bundle, assetId) {
+  if (!assetId) return null;
+  return (bundle.assets || []).find(a => a.id === assetId) || null;
+}
+function getShotDurationSec(shot, fallback) {
+  fallback = fallback ?? (MobileState.timeline?.defaultDurationSec || 5);
+  const raw = shot.durationSec ?? shot.duration ?? shot.lengthSec;
+  const n = Number(raw);
+  if (Number.isFinite(n) && n > 0) return n;
+  return fallback;
+}
+function getShotTransition(shot, fallback) {
+  fallback = fallback ?? (MobileState.timeline?.defaultTransition || 'cut');
+  return shot.transition || shot.transitionType || fallback;
+}
+function buildMobileTimelineCuts(bundle) {
+  const shots = bundle.shots || [];
+  return shots.map((shot, index) => {
+    const approvedAssetId = shot.approvedAssetId || null;
+    const asset     = findAssetById(bundle, approvedAssetId);
+    const assetUrl  = getAssetUrl(asset);
+    const assetKind = getAssetKind(asset);
+    return {
+      id:            `cut_${shot.id}`,
+      index,
+      projectId:     bundle.project?.id || MobileState.currentProjectId || null,
+      shotId:        shot.id,
+      sceneId:       shot.sceneId  || null,
+      sceneTitle:    shot.sceneTitle || '',
+      episodeId:     shot.episodeId || null,
+      episodeTitle:  shot.episodeTitle || '',
+      title:         shot.title || shot.name || shot.action || `Shot ${index + 1}`,
+      description:   shot.description || shot.action || shot.summary || '',
+      approvedAssetId,
+      asset,
+      assetUrl,
+      assetKind,
+      durationSec:   getShotDurationSec(shot),
+      transition:    getShotTransition(shot),
+      prompt:        shot.prompt || shot.imagePrompt || shot.visualPrompt || '',
+      motionPrompt:  shot.motionPrompt || shot.videoPrompt || '',
+      camera:        shot.camera || shot.cameraMove || '',
+      emotion:       shot.emotion || shot.mood || ''
+    };
+  });
+}
+window.getAssetUrl             = getAssetUrl;
+window.getAssetKind            = getAssetKind;
+window.findAssetById           = findAssetById;
+window.getShotDurationSec      = getShotDurationSec;
+window.getShotTransition       = getShotTransition;
+window.buildMobileTimelineCuts = buildMobileTimelineCuts;
+
+/* ── 7차: Timeline 플레이어 로직 ─────────────────────────────── */
+let mobileTimelinePlayTimer = null;
+function stopMobileTimelinePlayback() {
+  if (mobileTimelinePlayTimer) {
+    clearTimeout(mobileTimelinePlayTimer);
+    mobileTimelinePlayTimer = null;
+  }
+  if (MobileState?.timeline) {
+    MobileState.timeline.isPlaying = false;
+  }
+}
+function playMobileTimeline(cuts) {
+  stopMobileTimelinePlayback();
+  if (!cuts?.length) return;
+  MobileState.timeline.isPlaying = true;
+  const playNext = () => {
+    if (!MobileState.timeline.isPlaying) return;
+    const index   = Number(MobileState.timeline.currentIndex || 0);
+    const current = cuts[index];
+    if (!current) {
+      stopMobileTimelinePlayback();
+      if (typeof renderMobileProduction === 'function') renderMobileProduction();
+      return;
+    }
+    const durationMs = Math.max(500, Number(current.durationSec || 5)) * 1000;
+    mobileTimelinePlayTimer = setTimeout(() => {
+      if (!MobileState.timeline.isPlaying) return;
+      if (index >= cuts.length - 1) {
+        stopMobileTimelinePlayback();
+        MobileState.timeline.currentIndex = 0;
+        if (typeof saveMobileRuntimeState === 'function') saveMobileRuntimeState();
+        if (typeof renderMobileProduction === 'function') renderMobileProduction();
+        return;
+      }
+      MobileState.timeline.currentIndex = index + 1;
+      if (typeof saveMobileRuntimeState === 'function') saveMobileRuntimeState();
+      if (typeof renderMobileProduction === 'function') renderMobileProduction();
+      const nextBundle = window.__lastMobileTimelineBundle || { shots: [], assets: [] };
+      const nextCuts   = buildMobileTimelineCuts(nextBundle);
+      playMobileTimeline(nextCuts.length ? nextCuts : cuts);
+    }, durationMs);
+  };
+  playNext();
+}
+window.stopMobileTimelinePlayback = stopMobileTimelinePlayback;
+window.playMobileTimeline         = playMobileTimeline;
+
+/* ── 7차: Shot timing / transition 저장 ──────────────────────── */
+async function updateMobileShotTiming(shotId, patch) {
+  patch = patch || {};
+  try {
+    if (!window.SoavizDB?.db?.shots) {
+      if (typeof showToast === 'function') showToast('shots 테이블을 찾을 수 없습니다', 'error');
+      return false;
+    }
+    await SoavizDB.ready;
+    await SoavizDB.db.shots.update(shotId, { ...patch, updatedAt: Date.now() });
+    if (typeof showToast === 'function') showToast('컷 설정 저장 완료');
+    if (typeof renderPreviewTimeline === 'function') {
+      try { await renderPreviewTimeline(); } catch (e) { console.warn('[mobile] preview refresh failed', e); }
+    }
+    if (typeof renderMobileProduction === 'function') renderMobileProduction();
+    return true;
+  } catch (e) {
+    console.error('[mobile] updateMobileShotTiming failed', e);
+    if (typeof showToast === 'function') showToast('컷 설정 저장 실패', 'error');
+    return false;
+  }
+}
+window.updateMobileShotTiming = updateMobileShotTiming;
+
+/* ── 7차: 컷 순서 변경 ───────────────────────────────────────── */
+async function moveMobileTimelineCut(shotId, direction) {
+  direction = direction || 'up';
+  try {
+    if (!window.SoavizDB?.db?.shots) {
+      if (typeof showToast === 'function') showToast('shots 테이블을 찾을 수 없습니다', 'error');
+      return false;
+    }
+    await SoavizDB.ready;
+    const bundle       = await getMobilePipelineBundle(MobileState.currentProjectId);
+    const shots        = bundle.shots || [];
+    const currentIndex = shots.findIndex(s => s.id === shotId);
+    if (currentIndex < 0) return false;
+    const targetIndex  = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= shots.length) return false;
+    const current      = shots[currentIndex];
+    const target       = shots[targetIndex];
+    const currentOrder = Number(current.order ?? current.sortOrder ?? current.number ?? currentIndex);
+    const targetOrder  = Number(target.order  ?? target.sortOrder  ?? target.number  ?? targetIndex);
+    await SoavizDB.db.shots.update(current.id, { order: targetOrder, sortOrder: targetOrder, updatedAt: Date.now() });
+    await SoavizDB.db.shots.update(target.id,  { order: currentOrder, sortOrder: currentOrder, updatedAt: Date.now() });
+    if (typeof showToast === 'function') showToast('컷 순서 변경 완료');
+    if (typeof renderPreviewTimeline === 'function') {
+      try { await renderPreviewTimeline(); } catch (e) { console.warn('[mobile] preview refresh failed', e); }
+    }
+    if (typeof renderMobileProduction === 'function') renderMobileProduction();
+    return true;
+  } catch (e) {
+    console.error('[mobile] moveMobileTimelineCut failed', e);
+    if (typeof showToast === 'function') showToast('컷 순서 변경 실패', 'error');
+    return false;
+  }
+}
+window.moveMobileTimelineCut = moveMobileTimelineCut;
+
+/* ── 7차: Timeline Export 빌더 ───────────────────────────────── */
+function buildMobileTimelineExportPayload(bundle, cuts) {
+  return {
+    app: 'soaviz-studio',
+    kind: 'mobile-roughcut-timeline',
+    exportedAt: new Date().toISOString(),
+    project: bundle.project,
+    timeline: {
+      totalDurationSec: cuts.reduce((sum, cut) => sum + Number(cut.durationSec || 0), 0),
+      cutCount: cuts.length,
+      approvedCount: cuts.filter(cut => cut.approvedAssetId && cut.asset).length,
+      defaultTransition: MobileState.timeline.defaultTransition
+    },
+    cuts: cuts.map(cut => ({
+      id:            cut.id,
+      index:         cut.index,
+      shotId:        cut.shotId,
+      sceneId:       cut.sceneId,
+      title:         cut.title,
+      description:   cut.description,
+      approvedAssetId: cut.approvedAssetId,
+      assetKind:     cut.assetKind,
+      assetUrl:      cut.assetUrl,
+      durationSec:   cut.durationSec,
+      transition:    cut.transition,
+      prompt:        cut.prompt,
+      motionPrompt:  cut.motionPrompt,
+      camera:        cut.camera,
+      emotion:       cut.emotion
+    }))
+  };
+}
+function buildMobileTimelineExportText(bundle, cuts) {
+  const payload = buildMobileTimelineExportPayload(bundle, cuts);
+  const lines = [];
+  lines.push(`# Rough Cut Timeline — ${payload.project?.title || 'SOAVIZ Project'}`);
+  lines.push('');
+  lines.push(`Exported At: ${payload.exportedAt}`);
+  lines.push(`Cuts: ${payload.timeline.cutCount}`);
+  lines.push(`Approved: ${payload.timeline.approvedCount}`);
+  lines.push(`Total Duration: ${payload.timeline.totalDurationSec}s`);
+  lines.push('');
+  payload.cuts.forEach((cut, i) => {
+    lines.push(`## ${i + 1}. ${cut.title}`);
+    lines.push(`Shot ID: ${cut.shotId}`);
+    lines.push(`Duration: ${cut.durationSec}s`);
+    lines.push(`Transition: ${cut.transition}`);
+    lines.push(`Asset: ${cut.assetUrl || 'EMPTY'}`);
+    if (cut.prompt)       lines.push(`Prompt: ${cut.prompt}`);
+    if (cut.motionPrompt) lines.push(`Motion Prompt: ${cut.motionPrompt}`);
+    lines.push('');
+  });
+  return lines.join('\n');
+}
+function formatEDLTime(seconds) {
+  const fps = 24;
+  const totalFrames = Math.round(Number(seconds || 0) * fps);
+  const hh = Math.floor(totalFrames / (fps * 3600));
+  const mm = Math.floor((totalFrames % (fps * 3600)) / (fps * 60));
+  const ss = Math.floor((totalFrames % (fps * 60)) / fps);
+  const ff = totalFrames % fps;
+  return [hh, mm, ss, ff].map(n => String(n).padStart(2, '0')).join(':');
+}
+function buildMobileTimelineEDL(bundle, cuts) {
+  const lines = [];
+  lines.push(`TITLE: ${(bundle.project?.title || 'SOAVIZ_ROUGHCUT').replace(/\s+/g, '_')}`);
+  lines.push('FCM: NON-DROP FRAME');
+  lines.push('');
+  let cursor = 0;
+  cuts.forEach((cut, i) => {
+    const start = cursor;
+    const end   = cursor + Number(cut.durationSec || 5);
+    lines.push(`${String(i + 1).padStart(3, '0')}  AX       V     C        ${formatEDLTime(start)} ${formatEDLTime(end)} ${formatEDLTime(start)} ${formatEDLTime(end)}`);
+    lines.push(`* FROM CLIP NAME: ${cut.title}`);
+    lines.push(`* ASSET: ${cut.assetUrl || 'EMPTY'}`);
+    lines.push(`* TRANSITION: ${cut.transition}`);
+    lines.push('');
+    cursor = end;
+  });
+  return lines.join('\n');
+}
+window.buildMobileTimelineExportPayload = buildMobileTimelineExportPayload;
+window.buildMobileTimelineExportText    = buildMobileTimelineExportText;
+window.formatEDLTime                    = formatEDLTime;
+window.buildMobileTimelineEDL           = buildMobileTimelineEDL;
+
+/* ── 7차: Timeline 렌더 함수 ─────────────────────────────────── */
+function renderMobileTimelineExportPanel(bundle, cuts) {
+  const fmt = MobileState.timeline.exportFormat || 'json';
+  return `
+    <section class="mobile-section mobile-card">
+      <strong>타임라인 내보내기</strong>
+      <p style="margin:8px 0 16px;color:var(--text-dim);font-size:13px;line-height:1.55;">
+        러프컷 타임라인을 JSON, TXT, EDL 형식으로 저장합니다.
+      </p>
+      <div class="mobile-grid-2">
+        <button class="mobile-secondary-btn${fmt === 'json' ? ' active' : ''}" data-timeline-export-format="json">JSON</button>
+        <button class="mobile-secondary-btn${fmt === 'txt'  ? ' active' : ''}" data-timeline-export-format="txt">TXT</button>
+      </div>
+      <div style="margin-top:10px;">
+        <button class="mobile-secondary-btn${fmt === 'edl' ? ' active' : ''}" data-timeline-export-format="edl" style="width:100%;">EDL</button>
+      </div>
+      <div style="display:grid;gap:10px;margin-top:14px;">
+        <button class="mobile-primary-btn" id="mobile-download-timeline">타임라인 다운로드</button>
+        <button class="mobile-secondary-btn" id="mobile-copy-timeline">타임라인 복사</button>
+      </div>
+    </section>`;
+}
+
+function renderMobileTimelinePlayer(cuts) {
+  const safeIndex = Math.max(0, Math.min(Number(MobileState.timeline.currentIndex || 0), cuts.length - 1));
+  const current   = cuts[safeIndex] || cuts[0];
+  if (!current) return '';
+  const media = current.assetUrl
+    ? (current.assetKind === 'video'
+        ? `<video class="mobile-timeline-media" src="${escapeHTML(current.assetUrl)}" controls playsinline></video>`
+        : `<img class="mobile-timeline-media" src="${escapeHTML(current.assetUrl)}" alt="${escapeHTML(current.title)}">`)
+    : `<div class="mobile-timeline-empty">
+        <div style="font-size:32px;margin-bottom:10px;">▧</div>
+        <strong>채택된 Asset 없음</strong>
+        <p>Shot에서 이미지/영상 결과를 채택하면 여기에 표시됩니다.</p>
+      </div>`;
+  return `
+    <section class="mobile-section mobile-card">
+      <div class="mobile-timeline-player">
+        <div class="mobile-timeline-stage ${MobileState.timeline.previewScale === 'fill' ? 'fill' : 'fit'}">
+          ${media}
+        </div>
+        <div class="mobile-timeline-player-info">
+          <div>
+            <strong>${escapeHTML(current.title)}</strong>
+            <p>${safeIndex + 1} / ${cuts.length} · ${current.durationSec}s · ${escapeHTML(current.transition)}</p>
+          </div>
+        </div>
+        <div class="mobile-grid-2" style="margin-top:12px;">
+          <button class="mobile-secondary-btn" id="mobile-timeline-prev">이전 컷</button>
+          <button class="mobile-secondary-btn" id="mobile-timeline-next">다음 컷</button>
+        </div>
+        <div class="mobile-grid-2" style="margin-top:10px;">
+          <button class="mobile-primary-btn" id="mobile-timeline-play">
+            ${MobileState.timeline.isPlaying ? '정지' : '러프컷 재생'}
+          </button>
+          <button class="mobile-secondary-btn" id="mobile-timeline-scale">
+            ${MobileState.timeline.previewScale === 'fill' ? 'Fit 보기' : 'Fill 보기'}
+          </button>
+        </div>
+      </div>
+    </section>`;
+}
+
+function renderMobileTimelineCutCard(cut, cuts) {
+  const isSelected = MobileState.timeline.selectedCutId === cut.id;
+  const hasAsset   = Boolean(cut.approvedAssetId && cut.asset);
+  const isFirst    = cut.index === 0;
+  const isLast     = cut.index === cuts.length - 1;
+  const thumb      = cut.assetUrl
+    ? (cut.assetKind === 'video'
+        ? `<video src="${escapeHTML(cut.assetUrl)}" muted playsinline></video>`
+        : `<img src="${escapeHTML(cut.assetUrl)}" alt="${escapeHTML(cut.title)}" loading="lazy">`)
+    : `<span style="color:var(--text-faint);font-size:13px;">Empty</span>`;
+  return `
+    <article class="mobile-timeline-cut-card${isSelected ? ' active' : ''}${hasAsset ? ' has-asset' : ' missing-asset'}" data-cut-id="${escapeHTML(cut.id)}">
+      <div class="mobile-timeline-cut-thumb">${thumb}</div>
+      <div class="mobile-timeline-cut-body">
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <span class="mobile-mini-badge">CUT ${String(cut.index + 1).padStart(2, '0')}</span>
+            ${hasAsset
+              ? `<span class="mobile-mini-badge" style="background:rgba(52,211,153,0.16);color:#34d399;">APPROVED</span>`
+              : `<span class="mobile-mini-badge warning">EMPTY</span>`}
+          </div>
+          <button class="mobile-chip" data-select-cut="${escapeHTML(cut.id)}">선택</button>
+        </div>
+        <strong>${escapeHTML(cut.title)}</strong>
+        <p>${escapeHTML((cut.description || '').slice(0, 140))}</p>
+        <div class="mobile-grid-2" style="margin-top:12px;">
+          <label class="mobile-inline-field">
+            <span>길이</span>
+            <select data-cut-duration="${escapeHTML(cut.shotId)}" class="mobile-select compact">
+              ${[3,5,8,10,12].map(n => `<option value="${n}"${Number(cut.durationSec) === n ? ' selected' : ''}>${n}초</option>`).join('')}
+            </select>
+          </label>
+          <label class="mobile-inline-field">
+            <span>전환</span>
+            <select data-cut-transition="${escapeHTML(cut.shotId)}" class="mobile-select compact">
+              ${['cut','fade','dissolve'].map(t => `<option value="${t}"${cut.transition === t ? ' selected' : ''}>${t}</option>`).join('')}
+            </select>
+          </label>
+        </div>
+        <div class="mobile-grid-2" style="margin-top:10px;">
+          <button class="mobile-secondary-btn" data-move-cut-up="${escapeHTML(cut.shotId)}"${isFirst ? ' disabled' : ''}>▲ 위로</button>
+          <button class="mobile-secondary-btn" data-move-cut-down="${escapeHTML(cut.shotId)}"${isLast ? ' disabled' : ''}>▼ 아래로</button>
+        </div>
+        <div class="mobile-grid-2" style="margin-top:10px;">
+          <button class="mobile-secondary-btn" data-open-shot-from-timeline="${escapeHTML(cut.shotId)}">Shot 열기</button>
+          <button class="mobile-secondary-btn" data-copy-cut-prompt="${escapeHTML(cut.shotId)}">프롬프트</button>
+        </div>
+      </div>
+    </article>`;
+}
+
+function renderMobileTimelineView(bundle) {
+  window.__lastMobileTimelineBundle = bundle;
+  const cuts           = buildMobileTimelineCuts(bundle);
+  const totalDuration  = cuts.reduce((sum, cut) => sum + Number(cut.durationSec || 0), 0);
+  const approvedCount  = cuts.filter(cut => cut.approvedAssetId && cut.asset).length;
+  if (!bundle.project) {
+    return `
+      <section class="mobile-section mobile-card" style="text-align:center;padding:30px 18px;">
+        <div style="font-size:34px;margin-bottom:12px;">▤</div>
+        <strong>선택된 프로젝트가 없습니다</strong>
+        <p style="margin:8px 0 18px;color:var(--text-faint);font-size:13px;">스토리부터 생성해 주세요.</p>
+        <button class="mobile-primary-btn" id="mobile-timeline-start-story">스토리부터 시작</button>
+      </section>`;
+  }
+  if (!cuts.length) {
+    return `
+      <section class="mobile-section mobile-card" style="text-align:center;padding:30px 18px;">
+        <div style="font-size:34px;margin-bottom:12px;">▧</div>
+        <strong>타임라인에 넣을 Shot이 없습니다</strong>
+        <p style="margin:8px 0 18px;color:var(--text-faint);font-size:13px;">스토리를 Pipeline으로 보내면 Shot이 생성됩니다.</p>
+        <button class="mobile-primary-btn" id="mobile-timeline-start-story">스토리 입력하기</button>
+      </section>`;
+  }
+  return `
+    <section class="mobile-section mobile-hero-card">
+      <div style="font-size:12px;color:var(--accent);font-weight:900;margin-bottom:8px;">ROUGH CUT TIMELINE</div>
+      <h2 style="margin:0;font-size:22px;">${escapeHTML(bundle.project?.title || 'Untitled Project')}</h2>
+      <p style="margin:10px 0 0;color:var(--text-dim);font-size:13px;line-height:1.55;">
+        ${cuts.length} cuts · ${approvedCount}/${cuts.length} approved · 약 ${Math.round(totalDuration)}초
+      </p>
+    </section>
+    ${renderMobileTimelinePlayer(cuts)}
+    <section class="mobile-section mobile-card">
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;">
+        <div>
+          <strong>컷 편집</strong>
+          <p style="margin:6px 0 0;color:var(--text-faint);font-size:12px;">순서, 길이, 전환 효과를 조정합니다.</p>
+        </div>
+        <button class="mobile-chip" id="mobile-timeline-refresh">새로고침</button>
+      </div>
+    </section>
+    <section class="mobile-section">
+      <div class="mobile-list">
+        ${cuts.map(cut => renderMobileTimelineCutCard(cut, cuts)).join('')}
+      </div>
+    </section>
+    ${renderMobileTimelineExportPanel(bundle, cuts)}`;
+}
+
+window.renderMobileTimelineView       = renderMobileTimelineView;
+window.renderMobileTimelinePlayer     = renderMobileTimelinePlayer;
+window.renderMobileTimelineCutCard    = renderMobileTimelineCutCard;
+window.renderMobileTimelineExportPanel = renderMobileTimelineExportPanel;
+
 /* ── 6차: 생성 실행 — Confirm Sheet로 라우팅 ─────────────────── */
 function generateMobileShotAsset(bundle) {
   const ws   = MobileState.shotWorkspace;
@@ -53925,7 +54635,15 @@ function saveMobileRuntimeState() {
       gqActiveJobId:       gq.activeJobId || null,
       gqFilter:            gq.filter || 'all',
       gqBatchMode:         gq.batchMode || false,
-      gqSelectedShotIds:   gq.selectedShotIds || []
+      gqSelectedShotIds:   gq.selectedShotIds || [],
+      timeline: {
+        currentIndex:       MobileState.timeline.currentIndex || 0,
+        selectedCutId:      MobileState.timeline.selectedCutId || null,
+        exportFormat:       MobileState.timeline.exportFormat || 'json',
+        previewScale:       MobileState.timeline.previewScale || 'fit',
+        defaultDurationSec: MobileState.timeline.defaultDurationSec || 5,
+        defaultTransition:  MobileState.timeline.defaultTransition || 'cut'
+      }
     }));
   } catch (_) {}
 }
@@ -53957,6 +54675,17 @@ function restoreMobileRuntimeState() {
     if (data.gqFilter)                    gq2.filter          = data.gqFilter;
     if (data.gqBatchMode  !== undefined)  gq2.batchMode       = data.gqBatchMode;
     if (data.gqSelectedShotIds)           gq2.selectedShotIds = data.gqSelectedShotIds;
+    if (data.timeline) {
+      MobileState.timeline = {
+        ...MobileState.timeline,
+        currentIndex:       data.timeline.currentIndex   ?? 0,
+        selectedCutId:      data.timeline.selectedCutId  || null,
+        exportFormat:       data.timeline.exportFormat   || 'json',
+        previewScale:       data.timeline.previewScale   || 'fit',
+        defaultDurationSec: data.timeline.defaultDurationSec || 5,
+        defaultTransition:  data.timeline.defaultTransition  || 'cut'
+      };
+    }
     if (data.current && window.MobileApp?.go) {
       setTimeout(() => MobileApp.go(data.current), 0);
     }
@@ -54077,14 +54806,16 @@ async function renderMobileProduction() {
         <button class="mobile-chip${view === 'summary'  ? ' active' : ''}" data-prod-view="summary">요약</button>
         <button class="mobile-chip${view === 'shots'    ? ' active' : ''}" data-prod-view="shots">샷</button>
         <button class="mobile-chip${view === 'prompts'  ? ' active' : ''}" data-prod-view="prompts">프롬프트</button>
+        <button class="mobile-chip${view === 'timeline' ? ' active' : ''}" data-prod-view="timeline">타임라인</button>
         <button class="mobile-chip${view === 'export'   ? ' active' : ''}" data-prod-view="export">내보내기</button>
       </div>
     </section>
     <div id="mobile-production-view-root">
-      ${view === 'shots'   ? renderMobileShotCards(bundle)
-      : view === 'prompts' ? renderMobilePromptCards(bundle)
-      : view === 'export'  ? renderMobileExportPanel(bundle)
-      :                      renderMobileProductionSummary(bundle)}
+      ${view === 'shots'    ? renderMobileShotCards(bundle)
+      : view === 'prompts'  ? renderMobilePromptCards(bundle)
+      : view === 'timeline' ? renderMobileTimelineView(bundle)
+      : view === 'export'   ? renderMobileExportPanel(bundle)
+      :                       renderMobileProductionSummary(bundle)}
     </div>
     <section class="mobile-section">
       <button class="mobile-secondary-btn" id="mobile-open-pipeline">Pipeline 전체 보기</button>
