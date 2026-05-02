@@ -22467,6 +22467,11 @@ function showPage(name) {
       a.currentTime = 0;
     } catch (_) {}
   });
+  // detached Audio 객체 (new Audio() — DOM에 없어 $$('audio')에 걸리지 않음)
+  if (typeof currentPreviewAudio !== 'undefined' && currentPreviewAudio) {
+    try { currentPreviewAudio.pause(); } catch (_) {}
+    currentPreviewAudio = null;
+  }
   // mini-player UI 동기화 (재생 중이던 트랙 정보는 비움) — TDZ-safe
   const _mp = _tdzGet(() => MP);
   if (_mp) {
@@ -34102,8 +34107,8 @@ function renderElevenVoicesGrid() {
           ${labels.gender ? `<span style="padding:3px 7px; border-radius:var(--r-pill); background:var(--bg-elev); color:var(--text-faint); font-size:10px">${escapeHTML(labels.gender)}</span>` : ''}
         </div>
         <div style="display:flex; gap:6px; margin-top:6px">
-          ${v.preview_url ? `<button data-act="preview" data-i="${i}" style="flex:1; padding:6px 0; font-size:11px; border:1px solid var(--border); background:var(--bg-elev); color:var(--text-dim); border-radius:var(--r-sm)">▶ 미리듣기</button>` : ''}
-          <button data-act="use" data-i="${i}" style="flex:1; padding:6px 0; font-size:11px; background:var(--accent); color:white; border-radius:var(--r-sm); font-weight:600">Studio 적용</button>
+          ${v.preview_url ? `<button data-act="preview" data-vid="${escapeHTML(v.voice_id)}" style="flex:1; padding:6px 0; font-size:11px; border:1px solid var(--border); background:var(--bg-elev); color:var(--text-dim); border-radius:var(--r-sm)">▶ 미리듣기</button>` : ''}
+          <button data-act="use" data-vid="${escapeHTML(v.voice_id)}" style="flex:1; padding:6px 0; font-size:11px; background:var(--accent); color:white; border-radius:var(--r-sm); font-weight:600">Studio 적용</button>
         </div>
       </article>
     `;
@@ -34111,7 +34116,7 @@ function renderElevenVoicesGrid() {
   grid.querySelectorAll('[data-act="preview"]').forEach(b => {
     b.addEventListener('click', e => {
       e.stopPropagation();
-      const v = EL_VOICES[+b.dataset.i];
+      const v = EL_VOICES.find(x => x.voice_id === b.dataset.vid);
       if (!v?.preview_url) return;
       if (currentPreviewAudio) { try { currentPreviewAudio.pause(); } catch (_) {} }
       currentPreviewAudio = new Audio(v.preview_url);
@@ -34121,7 +34126,7 @@ function renderElevenVoicesGrid() {
   grid.querySelectorAll('[data-act="use"]').forEach(b => {
     b.addEventListener('click', e => {
       e.stopPropagation();
-      const v = EL_VOICES[+b.dataset.i];
+      const v = EL_VOICES.find(x => x.voice_id === b.dataset.vid);
       if (!v) return;
       // 임시 페르소나 추가 후 TTS Studio로 이동
       const newPersona = {
