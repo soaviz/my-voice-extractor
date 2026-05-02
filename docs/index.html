@@ -18831,6 +18831,46 @@
       border-color: rgba(167,139,250,0.38);
       color: white;
     }
+    /* 5차 — Shot workspace compact primary btn */
+    .mobile-primary-btn.compact {
+      min-height: 46px;
+      font-size: 13px;
+      box-shadow: 0 10px 24px rgba(167,139,250,0.20);
+    }
+    /* 5차 — Generated asset card */
+    .mobile-generated-asset-card {
+      overflow: hidden;
+      border-radius: 22px;
+      background: rgba(255,255,255,0.045);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .mobile-generated-asset-card.active {
+      border-color: rgba(52,211,153,0.48);
+      box-shadow: 0 0 0 1px rgba(52,211,153,0.18);
+    }
+    /* 5차 — Generated asset thumbnail */
+    .mobile-generated-thumb {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: rgba(0,0,0,0.30);
+      display: grid;
+      place-items: center;
+      color: var(--text-faint);
+      overflow: hidden;
+    }
+    .mobile-generated-thumb img,
+    .mobile-generated-thumb video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    /* 5차 — Sticky CTA disabled state */
+    .mobile-sticky-cta .mobile-primary-btn[disabled] {
+      opacity: 0.45;
+      cursor: not-allowed;
+      filter: grayscale(0.4);
+    }
   }
   @media (min-width: 769px) {
     #mobile-app-shell { display: none !important; }
@@ -51278,6 +51318,22 @@ MobileState.productionView      = MobileState.productionView      || 'summary';
 MobileState.selectedShotId      = MobileState.selectedShotId      || null;
 MobileState.exportFormat        = MobileState.exportFormat        || 'json';
 MobileState.mobileProjectDraft  = MobileState.mobileProjectDraft  || { title: '', story: '', genre: '', tone: 'cinematic' };
+MobileState.shotWorkspace = MobileState.shotWorkspace || {
+  active: false,
+  shotId: null,
+  mode: 'image',
+  selectedModelId: 'image-flash',
+  promptText: '',
+  negativePrompt: '',
+  aspectRatio: '16:9',
+  duration: 5,
+  motionStrength: 'medium',
+  useCharacterReference: true,
+  useWorldBible: true,
+  isGenerating: false,
+  generatedAssets: [],
+  selectedAssetId: null
+};
 
 /* ────────────────────────────────────────────────────────────
    § 2. 모델 / 앵글 설정
@@ -52149,14 +52205,21 @@ async function getMobileLibraryItems() {
     const tableName = detectMobileAssetTableName();
     if (tableName && db[tableName]) {
       const raw = await db[tableName].toArray().catch(() => []);
+      const ALLOWED_TYPES = new Set(['image','video','shot-prompt','prompt','character-sheet','asset']);
       raw.filter(x => !x.archived).forEach(x => {
+        const type = x.type || 'asset';
         items.push({
           id:          x.id,
           title:       x.title || x.name || 'Untitled Asset',
-          type:        x.type || 'asset',
-          imageUrl:    x.imageUrl || x.url || '',
+          type,
+          imageUrl:    type === 'video' ? '' : (x.imageUrl || x.url || ''),
+          videoUrl:    type === 'video' ? (x.videoUrl || x.url || '') : '',
+          url:         x.url || x.imageUrl || x.videoUrl || '',
           prompt:      x.prompt || '',
-          angle:       x.angle || '',
+          angle:       x.angle  || '',
+          shotId:      x.shotId || null,
+          model:       x.model  || '',
+          mock:        x.mock   || false,
           createdAt:   x.createdAt || 0,
           source:      tableName
         });
@@ -52554,6 +52617,8 @@ function renderMobileShotCards(bundle) {
                 ${shot.duration ? `<span>${escapeHTML(String(shot.duration))}s</span>` : ''}
               </div>
               <div class="mobile-grid-2" style="margin-top:12px;">
+                <button class="mobile-primary-btn compact" data-open-shot-image="${escapeHTML(shot.id)}">이미지 생성</button>
+                <button class="mobile-secondary-btn" data-open-shot-video="${escapeHTML(shot.id)}">영상 생성</button>
                 <button class="mobile-secondary-btn" data-copy-shot-prompt="${escapeHTML(shot.id)}">프롬프트 복사</button>
                 <button class="mobile-secondary-btn" data-save-shot-asset="${escapeHTML(shot.id)}">보관함 저장</button>
               </div>
@@ -52638,6 +52703,12 @@ function bindMobileProductionEvents(root, bundle) {
     renderMobileProduction();
   });
   root.querySelector('#mobile-prod-go-library')?.addEventListener('click', () => MobileApp.go('library'));
+  root.querySelectorAll('[data-open-shot-image]').forEach(btn => {
+    btn.addEventListener('click', () => openMobileShotWorkspace(btn.dataset.openShotImage, 'image'));
+  });
+  root.querySelectorAll('[data-open-shot-video]').forEach(btn => {
+    btn.addEventListener('click', () => openMobileShotWorkspace(btn.dataset.openShotVideo, 'video'));
+  });
   root.querySelectorAll('[data-copy-shot-prompt]').forEach(btn => {
     btn.addEventListener('click', async () => {
       const shot = bundle.shots.find(x => x.id === btn.dataset.copyShotPrompt);
@@ -52700,10 +52771,419 @@ function bindMobileProductionEvents(root, bundle) {
 }
 window.bindMobileProductionEvents = bindMobileProductionEvents;
 
+/* ── 5차: 모바일 생성 모델 설정 ───────────────────────────────── */
+const mobileGenerationModelConfig = [
+  { id:'image-flash', name:'Image Flash', type:'image', provider:'internal', speed:'빠름', quality:'중상', cost:60,  costLabel:'60 credits',  description:'샷 이미지 초안 생성에 적합합니다.',           recommended:true  },
+  { id:'image-pro',   name:'Image Pro',   type:'image', provider:'internal', speed:'중간', quality:'높음', cost:160, costLabel:'160 credits', description:'키비주얼과 고품질 컷 생성에 적합합니다.',      recommended:true  },
+  { id:'gpt-image',   name:'GPT Image',   type:'image', provider:'openai',   speed:'중간', quality:'높음', cost:null,costLabel:'variable',   description:'프롬프트 해석력과 구성력이 강한 이미지 모델입니다.', recommended:false },
+  { id:'video-fast',  name:'Video Fast',  type:'video', provider:'internal', speed:'빠름', quality:'중상', cost:180, costLabel:'180 credits', description:'짧은 모션 테스트에 적합합니다.',               recommended:true  },
+  { id:'video-pro',   name:'Video Pro',   type:'video', provider:'internal', speed:'느림', quality:'높음', cost:320, costLabel:'320 credits', description:'최종 컷 후보용 고품질 영상 생성에 적합합니다.',  recommended:true  },
+  { id:'kling',       name:'Kling',       type:'video', provider:'kling',    speed:'중간', quality:'높음', cost:null,costLabel:'variable',   description:'이미지 기반 영상화와 자연스러운 모션에 적합합니다.', recommended:false },
+  { id:'runway',      name:'Runway',      type:'video', provider:'runway',   speed:'중간', quality:'높음', cost:null,costLabel:'variable',   description:'시네마틱 영상 생성과 모션 제어에 적합합니다.',    recommended:false }
+];
+window.mobileGenerationModelConfig = mobileGenerationModelConfig;
+
+/* ── 5차: Shot Workspace 진입/종료 ────────────────────────────── */
+async function openMobileShotWorkspace(shotId, mode) {
+  mode = mode || 'image';
+  const bundle = await getMobilePipelineBundle(MobileState.currentProjectId);
+  const shot   = bundle.shots.find(s => s.id === shotId);
+  if (!shot) { if (typeof showToast === 'function') showToast('Shot을 찾을 수 없습니다', 'error'); return; }
+  const promptText     = buildShotPromptText(shot, bundle);
+  const existingAssets = await getMobileShotAssets(shotId);
+  const ws = MobileState.shotWorkspace;
+  ws.active          = true;
+  ws.shotId          = shotId;
+  ws.mode            = mode;
+  ws.promptText      = promptText;
+  ws.negativePrompt  = '';
+  ws.generatedAssets = existingAssets;
+  ws.selectedAssetId = shot.approvedAssetId || null;
+  ws.selectedModelId = mode === 'video' ? 'video-fast' : 'image-flash';
+  if (typeof saveMobileRuntimeState === 'function') saveMobileRuntimeState();
+  await renderMobileProduction();
+}
+function closeMobileShotWorkspace() {
+  MobileState.shotWorkspace.active = false;
+  MobileState.shotWorkspace.shotId = null;
+  if (typeof saveMobileRuntimeState === 'function') saveMobileRuntimeState();
+  renderMobileProduction();
+}
+window.openMobileShotWorkspace  = openMobileShotWorkspace;
+window.closeMobileShotWorkspace = closeMobileShotWorkspace;
+
+/* ── 5차: Shot Workspace 렌더 ─────────────────────────────────── */
+function renderMobileShotWorkspace(bundle) {
+  const ws     = MobileState.shotWorkspace;
+  const shot   = bundle.shots.find(s => s.id === ws.shotId);
+  const models = mobileGenerationModelConfig.filter(m => m.type === ws.mode);
+  if (!shot) {
+    return `<section>
+      <button class="mobile-chip" id="mobile-shot-ws-back">← 제작으로 돌아가기</button>
+      <h1 class="mobile-page-title" style="margin-top:14px;">Shot 없음</h1>
+      <p class="mobile-page-sub">선택한 Shot을 찾을 수 없습니다.</p>
+    </section>`;
+  }
+  const shotTitle = shot.title || shot.name || shot.action || 'Untitled Shot';
+  const assetsHTML = ws.generatedAssets && ws.generatedAssets.length
+    ? ws.generatedAssets.map(asset => {
+        const isApproved = ws.selectedAssetId === asset.id;
+        const thumbHTML  = asset.type === 'video'
+          ? (asset.videoUrl || asset.url
+              ? `<video src="${escapeHTML(asset.videoUrl || asset.url)}" controls playsinline style="width:100%;height:100%;object-fit:cover;display:block;"></video>`
+              : `<span style="font-size:32px">🎬</span>`)
+          : (asset.imageUrl || asset.url
+              ? `<img src="${escapeHTML(asset.imageUrl || asset.url)}" alt="${escapeHTML(asset.title || '')}" style="width:100%;height:100%;object-fit:cover;display:block;">`
+              : `<span style="font-size:32px">${asset.mock ? '▧' : '🖼'}</span>`);
+        return `<article class="mobile-generated-asset-card${isApproved ? ' active' : ''}">
+          <div class="mobile-generated-thumb">${thumbHTML}</div>
+          <div class="mobile-library-body">
+            <strong style="display:block;font-size:13px;">${escapeHTML(asset.title || 'Generated Asset')}</strong>
+            <p style="margin:3px 0 0;color:var(--text-faint);font-size:11px;">${escapeHTML(asset.type || ws.mode)} · ${escapeHTML(asset.model || ws.selectedModelId)}</p>
+            ${asset.mock ? `<span class="mobile-mini-badge" style="margin-top:6px;">MOCK</span>` : ''}
+            ${isApproved ? `<span class="mobile-mini-badge" style="margin-top:6px;background:rgba(52,211,153,0.18);color:#34d399;">APPROVED</span>` : ''}
+            <div class="mobile-grid-2" style="margin-top:12px;">
+              <button class="mobile-secondary-btn" data-mobile-asset-approve="${escapeHTML(asset.id)}">채택</button>
+              <button class="mobile-secondary-btn" data-mobile-asset-copy="${escapeHTML(asset.id)}">URL 복사</button>
+            </div>
+          </div>
+        </article>`;
+      }).join('')
+    : `<div style="text-align:center;padding:28px 12px;color:var(--text-faint);">
+        <div style="font-size:34px;margin-bottom:10px;">▧</div>
+        생성된 결과가 여기에 표시됩니다.
+      </div>`;
+  const videoOptions = ws.mode === 'video' ? `
+    <label class="mobile-label">영상 길이</label>
+    <select id="mobile-shot-ws-duration" class="mobile-select">
+      <option value="5"  ${Number(ws.duration) === 5  ? 'selected' : ''}>5초</option>
+      <option value="8"  ${Number(ws.duration) === 8  ? 'selected' : ''}>8초</option>
+      <option value="10" ${Number(ws.duration) === 10 ? 'selected' : ''}>10초</option>
+    </select>
+    <label class="mobile-label">모션 강도</label>
+    <select id="mobile-shot-ws-motion" class="mobile-select">
+      <option value="low"    ${ws.motionStrength === 'low'    ? 'selected' : ''}>낮음</option>
+      <option value="medium" ${ws.motionStrength === 'medium' ? 'selected' : ''}>중간</option>
+      <option value="high"   ${ws.motionStrength === 'high'   ? 'selected' : ''}>높음</option>
+    </select>` : '';
+  const selectedModel = models.find(m => m.id === ws.selectedModelId) || models[0];
+  return `
+    <section>
+      <button class="mobile-chip" id="mobile-shot-ws-back">← 제작으로 돌아가기</button>
+      <h1 class="mobile-page-title" style="margin-top:14px;">Shot 생성</h1>
+      <p class="mobile-page-sub">${escapeHTML(shotTitle)}</p>
+    </section>
+    <section class="mobile-section mobile-card">
+      <div class="mobile-chip-row">
+        <button class="mobile-chip${ws.mode === 'image' ? ' active' : ''}" data-shot-mode="image">이미지</button>
+        <button class="mobile-chip${ws.mode === 'video' ? ' active' : ''}" data-shot-mode="video">영상</button>
+      </div>
+    </section>
+    <section class="mobile-section mobile-card">
+      <h3 class="mobile-section-title">Shot 정보</h3>
+      <p style="margin:0;color:var(--text-dim);font-size:13px;line-height:1.6;">${escapeHTML((shot.description || shot.action || shot.summary || '').slice(0, 220))}</p>
+      <div class="mobile-shot-meta">
+        ${shot.camera   ? `<span>${escapeHTML(shot.camera)}</span>`          : ''}
+        ${shot.emotion  ? `<span>${escapeHTML(shot.emotion)}</span>`         : ''}
+        ${shot.duration ? `<span>${escapeHTML(String(shot.duration))}s</span>` : ''}
+      </div>
+    </section>
+    <section class="mobile-section mobile-card">
+      <h3 class="mobile-section-title">모델 선택</h3>
+      <div class="mobile-list">
+        ${models.map(m => `
+          <button class="mobile-model-card${ws.selectedModelId === m.id ? ' active' : ''}" data-shot-model="${escapeHTML(m.id)}">
+            <div style="flex:1;text-align:left;">
+              <strong style="display:block;font-size:13px;">${escapeHTML(m.name)}</strong>
+              <p style="margin:3px 0 0;color:var(--text-faint);font-size:11px;">${escapeHTML(m.description)}</p>
+            </div>
+            <span style="flex-shrink:0;font-size:11px;color:var(--accent);">${escapeHTML(m.costLabel)}</span>
+          </button>`).join('')}
+      </div>
+    </section>
+    <section class="mobile-section mobile-card">
+      <h3 class="mobile-section-title">프롬프트</h3>
+      <textarea id="mobile-shot-ws-prompt" class="mobile-textarea" style="min-height:120px;">${escapeHTML(ws.promptText || '')}</textarea>
+      <label class="mobile-label" style="margin-top:12px;">Negative Prompt</label>
+      <textarea id="mobile-shot-ws-negative" class="mobile-textarea" style="min-height:80px;">${escapeHTML(ws.negativePrompt || '')}</textarea>
+    </section>
+    <section class="mobile-section mobile-card">
+      <h3 class="mobile-section-title">출력 설정</h3>
+      <label class="mobile-label">비율</label>
+      <select id="mobile-shot-ws-aspect" class="mobile-select">
+        <option value="16:9" ${ws.aspectRatio === '16:9' ? 'selected' : ''}>16:9 영상</option>
+        <option value="9:16" ${ws.aspectRatio === '9:16' ? 'selected' : ''}>9:16 숏폼</option>
+        <option value="1:1"  ${ws.aspectRatio === '1:1'  ? 'selected' : ''}>1:1 정사각형</option>
+        <option value="4:5"  ${ws.aspectRatio === '4:5'  ? 'selected' : ''}>4:5 SNS</option>
+      </select>
+      ${videoOptions}
+    </section>
+    <section class="mobile-section mobile-card">
+      <h3 class="mobile-section-title">생성 결과${ws.generatedAssets && ws.generatedAssets.length ? ` (${ws.generatedAssets.length})` : ''}</h3>
+      <div class="mobile-list">${assetsHTML}</div>
+    </section>
+    <div class="mobile-sticky-cta">
+      <button class="mobile-primary-btn" id="mobile-shot-ws-generate"${ws.isGenerating ? ' disabled' : ''}>
+        ${ws.isGenerating
+          ? '생성 중...'
+          : `${ws.mode === 'image' ? '이미지' : '영상'} 생성하기  ${selectedModel ? selectedModel.costLabel : ''}`}
+      </button>
+    </div>`;
+}
+window.renderMobileShotWorkspace = renderMobileShotWorkspace;
+
+/* ── 5차: Shot Workspace 이벤트 바인딩 ───────────────────────── */
+function bindMobileShotWorkspaceEvents(root, bundle) {
+  const ws = MobileState.shotWorkspace;
+  root.querySelector('#mobile-shot-ws-back')?.addEventListener('click', closeMobileShotWorkspace);
+  root.querySelectorAll('[data-shot-mode]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      ws.mode            = btn.dataset.shotMode;
+      ws.selectedModelId = ws.mode === 'image' ? 'image-flash' : 'video-fast';
+      if (typeof saveMobileRuntimeState === 'function') saveMobileRuntimeState();
+      renderMobileProduction();
+    });
+  });
+  root.querySelectorAll('[data-shot-model]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      ws.selectedModelId = btn.dataset.shotModel;
+      if (typeof saveMobileRuntimeState === 'function') saveMobileRuntimeState();
+      renderMobileProduction();
+    });
+  });
+  const promptEl    = root.querySelector('#mobile-shot-ws-prompt');
+  const negativeEl  = root.querySelector('#mobile-shot-ws-negative');
+  const aspectEl    = root.querySelector('#mobile-shot-ws-aspect');
+  const durationEl  = root.querySelector('#mobile-shot-ws-duration');
+  const motionEl    = root.querySelector('#mobile-shot-ws-motion');
+  if (promptEl)   promptEl.addEventListener('input',   e => { ws.promptText     = e.target.value; });
+  if (negativeEl) negativeEl.addEventListener('input', e => { ws.negativePrompt = e.target.value; });
+  if (aspectEl)   aspectEl.addEventListener('change',  e => { ws.aspectRatio    = e.target.value; if (typeof saveMobileRuntimeState==='function') saveMobileRuntimeState(); });
+  if (durationEl) durationEl.addEventListener('change',e => { ws.duration       = Number(e.target.value || 5); if (typeof saveMobileRuntimeState==='function') saveMobileRuntimeState(); });
+  if (motionEl)   motionEl.addEventListener('change',  e => { ws.motionStrength = e.target.value; if (typeof saveMobileRuntimeState==='function') saveMobileRuntimeState(); });
+  root.querySelector('#mobile-shot-ws-generate')?.addEventListener('click', () => generateMobileShotAsset(bundle));
+  root.querySelectorAll('[data-mobile-asset-approve]').forEach(btn => {
+    btn.addEventListener('click', () => approveMobileShotAsset(btn.dataset.mobileAssetApprove, bundle));
+  });
+  root.querySelectorAll('[data-mobile-asset-copy]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const asset = ws.generatedAssets.find(x => x.id === btn.dataset.mobileAssetCopy);
+      const url   = asset?.url || asset?.imageUrl || asset?.videoUrl || '';
+      if (!url) { if (typeof showToast === 'function') showToast('복사할 URL이 없습니다', 'error'); return; }
+      if (typeof copyText === 'function') await copyText(url);
+      if (typeof showToast === 'function') showToast('URL 복사 완료');
+    });
+  });
+}
+window.bindMobileShotWorkspaceEvents = bindMobileShotWorkspaceEvents;
+
+/* ── 5차: 생성 실행 브릿지 ────────────────────────────────────── */
+async function generateMobileShotAsset(bundle) {
+  const ws   = MobileState.shotWorkspace;
+  const shot = bundle.shots.find(s => s.id === ws.shotId);
+  if (!shot) { if (typeof showToast === 'function') showToast('Shot을 찾을 수 없습니다', 'error'); return; }
+  if (!ws.promptText || ws.promptText.trim().length < 5) { if (typeof showToast === 'function') showToast('프롬프트를 입력해 주세요', 'error'); return; }
+  ws.isGenerating = true;
+  renderMobileProduction();
+  try {
+    const asset = ws.mode === 'image'
+      ? await mobileGenerateImageAsset(shot, bundle)
+      : await mobileGenerateVideoAsset(shot, bundle);
+    if (asset) {
+      ws.generatedAssets = [asset, ...(ws.generatedAssets || [])];
+      await persistMobileGeneratedAsset(asset, shot, bundle);
+      if (typeof showToast === 'function') showToast('생성 완료');
+    } else {
+      if (typeof showToast === 'function') showToast('생성 결과가 없습니다', 'warn');
+    }
+  } catch (e) {
+    console.error('[mobile] generate shot asset failed', e);
+    if (typeof showToast === 'function') showToast('생성 중 오류가 발생했습니다', 'error');
+  } finally {
+    ws.isGenerating = false;
+    renderMobileProduction();
+  }
+}
+window.generateMobileShotAsset = generateMobileShotAsset;
+
+/* ── 5차: 이미지 생성 ─────────────────────────────────────────── */
+async function mobileGenerateImageAsset(shot, bundle) {
+  const ws        = MobileState.shotWorkspace;
+  const projectId = bundle.project?.id || MobileState.currentProjectId;
+  const endpoint  = window.__SOAVIZ_CONFIG__?.backendUrl
+    ? `${window.__SOAVIZ_CONFIG__.backendUrl}/api/image/generate`
+    : '/api/image/generate';
+  const payload = {
+    projectId, shotId: shot.id,
+    model: ws.selectedModelId, prompt: ws.promptText,
+    negativePrompt: ws.negativePrompt, aspectRatio: ws.aspectRatio,
+    source: 'mobile-shot-workspace'
+  };
+  try {
+    const res = await fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    if (res.ok) {
+      const data = await res.json();
+      const url  = data.url || data.imageUrl || data.outputUrl;
+      if (url) return {
+        id: data.id || `asset_${Date.now()}`,
+        projectId, shotId: shot.id, type: 'image',
+        title: `Image · ${shot.title || shot.name || shot.action || 'Shot'}`,
+        url, imageUrl: url, model: ws.selectedModelId,
+        prompt: ws.promptText, negativePrompt: ws.negativePrompt,
+        aspectRatio: ws.aspectRatio, source: 'mobile-shot-workspace',
+        createdAt: Date.now(), updatedAt: Date.now(), archived: false
+      };
+    }
+  } catch (e) { console.warn('[mobile] image generation API fallback', e); }
+  return {
+    id: `mock_image_${Date.now()}_${shot.id}`,
+    projectId, shotId: shot.id, type: 'image',
+    title: `Mock Image · ${shot.title || shot.name || shot.action || 'Shot'}`,
+    url: '', imageUrl: '', model: ws.selectedModelId,
+    prompt: ws.promptText, negativePrompt: ws.negativePrompt,
+    aspectRatio: ws.aspectRatio, source: 'mobile-shot-workspace',
+    mock: true, createdAt: Date.now(), updatedAt: Date.now(), archived: false
+  };
+}
+window.mobileGenerateImageAsset = mobileGenerateImageAsset;
+
+/* ── 5차: 영상 생성 ───────────────────────────────────────────── */
+async function mobileGenerateVideoAsset(shot, bundle) {
+  const ws        = MobileState.shotWorkspace;
+  const projectId = bundle.project?.id || MobileState.currentProjectId;
+  if (typeof VIDEO_STATE !== 'undefined') {
+    VIDEO_STATE.prompt      = ws.promptText;
+    VIDEO_STATE.duration    = ws.duration;
+    VIDEO_STATE.aspectRatio = ws.aspectRatio;
+    VIDEO_STATE.feature     = 'create';
+  }
+  const endpoint = window.__SOAVIZ_CONFIG__?.backendUrl
+    ? `${window.__SOAVIZ_CONFIG__.backendUrl}/api/video/generate`
+    : '/api/video/generate';
+  const payload = {
+    projectId, shotId: shot.id,
+    model: ws.selectedModelId, prompt: ws.promptText,
+    negativePrompt: ws.negativePrompt, aspectRatio: ws.aspectRatio,
+    duration: ws.duration, motionStrength: ws.motionStrength,
+    source: 'mobile-shot-workspace'
+  };
+  try {
+    const res = await fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    if (res.ok) {
+      const data = await res.json();
+      const url  = data.url || data.videoUrl || data.outputUrl;
+      if (url) return {
+        id: data.id || `asset_${Date.now()}`,
+        projectId, shotId: shot.id, type: 'video',
+        title: `Video · ${shot.title || shot.name || shot.action || 'Shot'}`,
+        url, videoUrl: url, model: ws.selectedModelId,
+        prompt: ws.promptText, negativePrompt: ws.negativePrompt,
+        aspectRatio: ws.aspectRatio, duration: ws.duration,
+        motionStrength: ws.motionStrength, source: 'mobile-shot-workspace',
+        createdAt: Date.now(), updatedAt: Date.now(), archived: false
+      };
+    }
+  } catch (e) { console.warn('[mobile] video generation API fallback', e); }
+  return {
+    id: `mock_video_${Date.now()}_${shot.id}`,
+    projectId, shotId: shot.id, type: 'video',
+    title: `Mock Video · ${shot.title || shot.name || shot.action || 'Shot'}`,
+    url: '', videoUrl: '', model: ws.selectedModelId,
+    prompt: ws.promptText, negativePrompt: ws.negativePrompt,
+    aspectRatio: ws.aspectRatio, duration: ws.duration,
+    motionStrength: ws.motionStrength, source: 'mobile-shot-workspace',
+    mock: true, createdAt: Date.now(), updatedAt: Date.now(), archived: false
+  };
+}
+window.mobileGenerateVideoAsset = mobileGenerateVideoAsset;
+
+/* ── 5차: 생성 asset 저장 ─────────────────────────────────────── */
+async function persistMobileGeneratedAsset(asset, shot, bundle) {
+  try {
+    if (!window.SoavizDB?.db) return false;
+    await SoavizDB.ready;
+    const db  = SoavizDB.db;
+    const now = Date.now();
+    const normalized = {
+      ...asset,
+      id:        asset.id || `asset_${now}`,
+      projectId: asset.projectId || bundle.project?.id || MobileState.currentProjectId,
+      shotId:    shot.id,
+      createdAt: asset.createdAt || now,
+      updatedAt: now,
+      archived:  false
+    };
+    if (db.assets) {
+      await db.assets.put(normalized);
+    } else if (db.shots) {
+      const current = await db.shots.get(shot.id);
+      if (current) {
+        const prev = Array.isArray(current.generatedAssets) ? current.generatedAssets : [];
+        await db.shots.update(shot.id, { generatedAssets: [...prev, normalized], updatedAt: now });
+      }
+    }
+    return true;
+  } catch (e) {
+    console.warn('[mobile] persist generated asset failed', e);
+    if (typeof showToast === 'function') showToast('생성 결과 저장 실패', 'warn');
+    return false;
+  }
+}
+window.persistMobileGeneratedAsset = persistMobileGeneratedAsset;
+
+/* ── 5차: Shot 채택본 지정 ─────────────────────────────────────── */
+async function approveMobileShotAsset(assetId, bundle) {
+  const ws     = MobileState.shotWorkspace;
+  const shotId = ws.shotId;
+  if (!assetId || !shotId) { if (typeof showToast === 'function') showToast('채택할 결과가 없습니다', 'error'); return false; }
+  try {
+    if (!window.SoavizDB?.db?.shots) { if (typeof showToast === 'function') showToast('shots 테이블을 찾을 수 없습니다', 'error'); return false; }
+    await SoavizDB.ready;
+    await SoavizDB.db.shots.update(shotId, { approvedAssetId: assetId, updatedAt: Date.now() });
+    ws.selectedAssetId = assetId;
+    if (typeof saveMobileRuntimeState === 'function') saveMobileRuntimeState();
+    if (typeof renderPreviewTimeline === 'function') {
+      try { await renderPreviewTimeline(); } catch (e) { console.warn('[mobile] renderPreviewTimeline failed', e); }
+    }
+    if (typeof showToast === 'function') showToast('Shot 채택본으로 지정했습니다');
+    renderMobileProduction();
+    return true;
+  } catch (e) {
+    console.error('[mobile] approve asset failed', e);
+    if (typeof showToast === 'function') showToast('채택본 지정 실패', 'error');
+    return false;
+  }
+}
+window.approveMobileShotAsset = approveMobileShotAsset;
+
+/* ── 5차: Shot Asset 불러오기 ─────────────────────────────────── */
+async function getMobileShotAssets(shotId) {
+  try {
+    if (!window.SoavizDB?.db) return [];
+    await SoavizDB.ready;
+    const db = SoavizDB.db;
+    if (db.assets) {
+      const all = await db.assets.toArray().catch(() => []);
+      return all.filter(a => !a.archived && a.shotId === shotId)
+                .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    }
+    if (db.shots) {
+      const shot = await db.shots.get(shotId);
+      return Array.isArray(shot?.generatedAssets) ? shot.generatedAssets : [];
+    }
+    return [];
+  } catch (e) {
+    console.warn('[mobile] get shot assets failed', e);
+    return [];
+  }
+}
+window.getMobileShotAssets = getMobileShotAssets;
+
 /* ── 런타임 상태 저장/복원 ─────────────────────────────────────── */
 const MOBILE_STATE_KEY = 'soaviz.mobile.state.v1';
 function saveMobileRuntimeState() {
   try {
+    const ws = MobileState.shotWorkspace || {};
     localStorage.setItem(MOBILE_STATE_KEY, JSON.stringify({
       current:             MobileApp?.current || 'home',
       selectedTone:        MobileState.selectedTone,
@@ -52712,7 +53192,15 @@ function saveMobileRuntimeState() {
       currentProjectId:    MobileState.currentProjectId,
       productionView:      MobileState.productionView || 'summary',
       selectedShotId:      MobileState.selectedShotId,
-      exportFormat:        MobileState.exportFormat || 'json'
+      exportFormat:        MobileState.exportFormat || 'json',
+      wsActive:            ws.active || false,
+      wsShotId:            ws.shotId || null,
+      wsMode:              ws.mode || 'image',
+      wsModelId:           ws.selectedModelId || 'image-flash',
+      wsAspect:            ws.aspectRatio || '16:9',
+      wsDuration:          ws.duration || 5,
+      wsMotion:            ws.motionStrength || 'medium',
+      wsAssetId:           ws.selectedAssetId || null
     }));
   } catch (_) {}
 }
@@ -52728,6 +53216,16 @@ function restoreMobileRuntimeState() {
     if (data.productionView)      MobileState.productionView = data.productionView;
     if (data.selectedShotId)      MobileState.selectedShotId = data.selectedShotId;
     if (data.exportFormat)        MobileState.exportFormat = data.exportFormat;
+    if (!MobileState.shotWorkspace) MobileState.shotWorkspace = {};
+    const ws = MobileState.shotWorkspace;
+    if (data.wsActive  !== undefined) ws.active          = data.wsActive;
+    if (data.wsShotId  !== undefined) ws.shotId          = data.wsShotId;
+    if (data.wsMode)                  ws.mode            = data.wsMode;
+    if (data.wsModelId)               ws.selectedModelId = data.wsModelId;
+    if (data.wsAspect)                ws.aspectRatio     = data.wsAspect;
+    if (data.wsDuration)              ws.duration        = data.wsDuration;
+    if (data.wsMotion)                ws.motionStrength  = data.wsMotion;
+    if (data.wsAssetId !== undefined) ws.selectedAssetId = data.wsAssetId;
     if (data.current && window.MobileApp?.go) {
       setTimeout(() => MobileApp.go(data.current), 0);
     }
@@ -52825,6 +53323,15 @@ async function renderMobileProduction() {
   const root = document.getElementById('mobile-screen-production');
   if (!root) return;
 
+  /* 5차: Shot Workspace가 active면 단일 워크스페이스 화면 */
+  if (MobileState.shotWorkspace?.active) {
+    const project = await ensureMobileCurrentProject();
+    const bundle  = await getMobilePipelineBundle(project?.id || MobileState.currentProjectId);
+    root.innerHTML = renderMobileShotWorkspace(bundle);
+    bindMobileShotWorkspaceEvents(root, bundle);
+    return;
+  }
+
   const project = await ensureMobileCurrentProject();
   const bundle  = await getMobilePipelineBundle(project?.id || MobileState.currentProjectId);
 
@@ -52868,24 +53375,33 @@ async function renderMobileLibrary() {
 
   const items = await getMobileLibraryItems();
 
-  const cardsHTML = items.map(a => `
-    <article class="mobile-library-card" data-library-id="${escapeHTML(a.id)}">
-      <div class="mobile-library-thumb">
-        ${a.imageUrl
+  const cardsHTML = items.map(a => {
+    const isVideo    = a.type === 'video';
+    const isPrompt   = a.type === 'prompt' || a.type === 'shot-prompt';
+    const thumbHTML  = isVideo && (a.videoUrl || a.url)
+      ? `<video src="${escapeHTML(a.videoUrl || a.url)}" controls playsinline style="width:100%;height:100%;object-fit:cover;display:block;"></video>`
+      : (a.imageUrl
           ? `<img src="${escapeHTML(a.imageUrl)}" alt="${escapeHTML(a.title)}" loading="lazy">`
-          : `<span style="font-size:32px">${TYPE_ICON[a.type] || '▣'}</span>`}
-      </div>
+          : `<span style="font-size:32px">${TYPE_ICON[a.type] || '▣'}</span>`);
+    const downloadBtn = (a.imageUrl || (isVideo && a.videoUrl))
+      ? `<button class="mobile-secondary-btn" data-lib-download="${escapeHTML(a.id)}">다운로드</button>`
+      : '';
+    const promptBtn  = isPrompt && a.prompt
+      ? `<button class="mobile-secondary-btn" data-lib-prompt-copy="${escapeHTML(a.id)}">텍스트 복사</button>`
+      : '';
+    const urlBtn     = `<button class="mobile-secondary-btn" data-lib-copy="${escapeHTML(a.id)}">URL 복사</button>`;
+    return `<article class="mobile-library-card" data-library-id="${escapeHTML(a.id)}">
+      <div class="mobile-library-thumb">${thumbHTML}</div>
       <div class="mobile-library-body">
         <strong style="font-size:13px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
           ${escapeHTML(a.title)}
         </strong>
-        <p style="margin:3px 0 0;color:var(--text-faint);font-size:11px">${escapeHTML(a.type)} · ${a.angle ? escapeHTML(a.angle) + ' · ' : ''}${new Date(a.createdAt || 0).toLocaleDateString('ko-KR', { month:'short', day:'numeric' })}</p>
-        <div class="mobile-library-actions">
-          ${a.imageUrl ? `<button class="mobile-secondary-btn" data-lib-download="${escapeHTML(a.id)}">다운로드</button>` : ''}
-          <button class="mobile-secondary-btn" data-lib-copy="${escapeHTML(a.id)}">URL 복사</button>
-        </div>
+        <p style="margin:3px 0 0;color:var(--text-faint);font-size:11px">${escapeHTML(a.type)}${a.model ? ' · ' + escapeHTML(a.model) : ''}${a.angle ? ' · ' + escapeHTML(a.angle) : ''} · ${new Date(a.createdAt || 0).toLocaleDateString('ko-KR', { month:'short', day:'numeric' })}</p>
+        ${a.mock ? `<span class="mobile-mini-badge" style="margin-top:6px;">MOCK</span>` : ''}
+        <div class="mobile-library-actions">${downloadBtn}${promptBtn || urlBtn}</div>
       </div>
-    </article>`).join('');
+    </article>`;
+  }).join('');
 
   root.innerHTML = `
     <section>
@@ -52931,10 +53447,19 @@ async function renderMobileLibrary() {
   root.querySelectorAll('[data-lib-copy]').forEach(btn => {
     btn.addEventListener('click', async () => {
       const item = items.find(x => x.id === btn.dataset.libCopy);
-      const text = item?.imageUrl || item?.prompt || '';
-      if (!text) return;
+      const text = item?.imageUrl || item?.videoUrl || item?.url || item?.prompt || '';
+      if (!text) { if (typeof showToast === 'function') showToast('복사할 URL이 없습니다', 'error'); return; }
       if (typeof copyText === 'function') await copyText(text);
       if (typeof showToast === 'function') showToast('URL 복사 완료');
+    });
+  });
+  root.querySelectorAll('[data-lib-prompt-copy]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const item = items.find(x => x.id === btn.dataset.libPromptCopy);
+      const text = item?.prompt || '';
+      if (!text) { if (typeof showToast === 'function') showToast('복사할 텍스트가 없습니다', 'error'); return; }
+      if (typeof copyText === 'function') await copyText(text);
+      if (typeof showToast === 'function') showToast('프롬프트 텍스트 복사 완료');
     });
   });
 }
