@@ -18761,6 +18761,76 @@
       max-height: 200px;
       object-fit: cover;
     }
+    /* 4차 — Shot & Prompt cards */
+    .mobile-shot-card, .mobile-prompt-card {
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.045);
+      border-radius: 22px;
+      padding: 15px;
+    }
+    .mobile-shot-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .mobile-shot-head span {
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      flex-shrink: 0;
+    }
+    .mobile-shot-head small {
+      color: var(--text-faint);
+      font-size: 11px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .mobile-shot-card strong, .mobile-prompt-card strong {
+      display: block;
+      font-size: 15px;
+      line-height: 1.35;
+    }
+    .mobile-shot-card p, .mobile-prompt-card p {
+      margin: 8px 0 0;
+      color: var(--text-dim);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    .mobile-shot-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .mobile-shot-meta span, .mobile-mini-badge {
+      display: inline-flex;
+      min-height: 24px;
+      align-items: center;
+      padding: 0 8px;
+      border-radius: 999px;
+      background: rgba(167,139,250,0.12);
+      color: var(--accent);
+      font-size: 10px;
+      font-weight: 800;
+    }
+    /* 4차 — Production tabs sticky */
+    .mobile-production-tabs {
+      position: sticky;
+      top: 58px;
+      z-index: 70;
+      padding: 6px 0 8px;
+      background: linear-gradient(180deg, #06050F 70%, rgba(6,5,15,0));
+    }
+    /* 4차 — Secondary btn active state */
+    .mobile-secondary-btn.active {
+      background: rgba(167,139,250,0.18);
+      border-color: rgba(167,139,250,0.38);
+      color: white;
+    }
   }
   @media (min-width: 769px) {
     #mobile-app-shell { display: none !important; }
@@ -51202,6 +51272,13 @@ const MobileState = {
 };
 window.MobileState = MobileState;
 
+// 4차 확장 필드 (기존 값 보존)
+MobileState.currentProjectId    = MobileState.currentProjectId    || null;
+MobileState.productionView      = MobileState.productionView      || 'summary';
+MobileState.selectedShotId      = MobileState.selectedShotId      || null;
+MobileState.exportFormat        = MobileState.exportFormat        || 'json';
+MobileState.mobileProjectDraft  = MobileState.mobileProjectDraft  || { title: '', story: '', genre: '', tone: 'cinematic' };
+
 /* ────────────────────────────────────────────────────────────
    § 2. 모델 / 앵글 설정
    ──────────────────────────────────────────────────────────── */
@@ -51409,35 +51486,42 @@ async function mobileSendStoryToPipeline() {
     if (typeof showToast === 'function') showToast('스토리 아이디어를 10자 이상 입력해 주세요', 'error');
     return false;
   }
+  // 1. 현재 프로젝트 확보 (없으면 자동 생성)
+  let project = await ensureMobileCurrentProject();
+  if (!project) {
+    project = await createMobileProject({ title: '모바일 프로젝트', story: text, tone: MobileState.selectedTone || 'cinematic' });
+  }
+  if (!project) return false;
   MobileState.storyText = text;
+  MobileState.currentProjectId = project.id;
+  // 2. STORY_DOC 업데이트
   if (window.STORY_DOC) {
     STORY_DOC.body   = text;
-    STORY_DOC.title  = STORY_DOC.title || '모바일 스토리';
+    STORY_DOC.title  = project.title || STORY_DOC.title || '모바일 스토리';
     STORY_DOC.source = 'mobile';
   }
-  // 기존 sv-to-pipeline 버튼 우선
-  const pipelineBtn = document.getElementById('sv-to-pipeline');
-  if (pipelineBtn) {
-    if (typeof showToast === 'function') showToast('모바일 스토리를 Pipeline으로 보내는 중…');
-    pipelineBtn.click();
-    setTimeout(() => MobileApp.go('production'), 800);
-    return true;
-  }
-  // 직접 Pipeline 생성 fallback
+  // 3. 프로젝트 story 저장
   try {
-    let projectId = window.SoavizPipeline?.state?.projectId || null;
-    if (!projectId && window.SoavizPipeline?.createProject) {
-      const created = await SoavizPipeline.createProject({ title: '모바일 프로젝트', story: text, source: 'mobile' });
-      projectId = created?.id || created;
+    if (window.SoavizDB?.db?.projects) {
+      await SoavizDB.db.projects.update(project.id, { story: text, tone: MobileState.selectedTone || 'cinematic', updatedAt: new Date().toISOString() });
     }
-    if (projectId) {
-      if (typeof runPreProductionPipeline === 'function') {
-        await runPreProductionPipeline(projectId, text, { force: false });
-      } else if (typeof decomposeStoryToPipeline === 'function') {
-        await decomposeStoryToPipeline(projectId, text);
-      }
-      if (window.SoavizPipeline?.setProject) await SoavizPipeline.setProject(projectId);
+  } catch (e) { console.warn('[mobile] project story update failed', e); }
+  // 4. Pipeline 실행
+  try {
+    if (typeof showToast === 'function') showToast('스토리를 Pipeline으로 보내는 중…');
+    if (window.SoavizPipeline?.setProject) await SoavizPipeline.setProject(project.id);
+    // 기존 sv-to-pipeline 버튼 클릭 우선
+    const pipelineBtn = document.getElementById('sv-to-pipeline');
+    if (pipelineBtn) {
+      pipelineBtn.click();
+      await new Promise(r => setTimeout(r, 600));
+    } else if (typeof runPreProductionPipeline === 'function') {
+      await runPreProductionPipeline(project.id, text, { force: false });
+    } else if (typeof decomposeStoryToPipeline === 'function') {
+      await decomposeStoryToPipeline(project.id, text);
     }
+    MobileState.productionView = 'summary';
+    if (typeof saveMobileRuntimeState === 'function') saveMobileRuntimeState();
     if (typeof showToast === 'function') showToast('Pipeline 생성 완료');
     MobileApp.go('production');
     return true;
@@ -51447,6 +51531,7 @@ async function mobileSendStoryToPipeline() {
     return false;
   }
 }
+window.mobileSendStoryToPipeline = mobileSendStoryToPipeline;
 
 /* ────────────────────────────────────────────────────────────
    § 7. 화면 렌더: 홈
@@ -51468,11 +51553,37 @@ async function renderMobileHome() {
         <p style="color:var(--text-faint);font-size:13px;margin:0">최근 프로젝트가 없습니다.</p>
       </div>`;
 
+  const current   = await ensureMobileCurrentProject();
+  const allProjs  = await getMobileProjects();
+  const projectHubHTML = `
+    <section class="mobile-section mobile-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+        <div>
+          <div style="font-size:11px;color:var(--accent);font-weight:900;margin-bottom:6px;">CURRENT PROJECT</div>
+          <strong style="font-size:18px;">${escapeHTML(current?.title || '선택된 프로젝트 없음')}</strong>
+          <p style="margin:7px 0 0;color:var(--text-faint);font-size:12px;">
+            ${current ? escapeHTML(current.status || 'active') : '프로젝트를 먼저 생성하세요'}
+          </p>
+        </div>
+        <button class="mobile-chip" id="mobile-new-project-btn">＋ 새 프로젝트</button>
+      </div>
+      ${allProjs.length > 0 ? `
+        <div style="margin-top:14px;">
+          <div class="mobile-chip-row">
+            ${allProjs.slice(0, 5).map(p => `
+              <button class="mobile-chip${MobileState.currentProjectId === p.id ? ' active' : ''}" data-mobile-project-id="${escapeHTML(p.id)}">
+                ${escapeHTML(p.title || 'Untitled')}
+              </button>`).join('')}
+          </div>
+        </div>` : `<p style="margin:14px 0 0;color:var(--text-dim);font-size:13px;">아직 프로젝트가 없습니다.</p>`}
+    </section>`;
+
   root.innerHTML = `
     <section>
       <h1 class="mobile-page-title">SOAVIZ Studio</h1>
       <p class="mobile-page-sub">아이디어를 스토리, 캐릭터, 샷리스트, 영상 프롬프트로 연결하세요.</p>
     </section>
+    ${projectHubHTML}
     <section class="mobile-section mobile-hero-card">
       <div style="font-size:12px;color:var(--accent);font-weight:800;margin-bottom:8px;letter-spacing:0.06em">TODAY FLOW</div>
       <h2 style="margin:0;font-size:22px;line-height:1.2;font-weight:800">오늘은 무엇을 만들까요?</h2>
@@ -51511,6 +51622,7 @@ async function renderMobileHome() {
       <div class="mobile-list">${projectsHTML}</div>
     </section>
   `;
+  // 기존 이벤트
   root.querySelector('[data-mobile-action="start-story"]')?.addEventListener('click', () => MobileApp.go('story'));
   root.querySelector('[data-mobile-action="character"]')?.addEventListener('click',   () => {
     MobileState.characterMode = 'sheet';
@@ -51519,6 +51631,14 @@ async function renderMobileHome() {
   root.querySelector('[data-mobile-action="production"]')?.addEventListener('click',  () => MobileApp.go('production'));
   root.querySelector('[data-mobile-action="upload"]')?.addEventListener('click',      () => MobileActions.uploadMedia());
   root.querySelector('[data-mobile-action="library"]')?.addEventListener('click',     () => MobileApp.go('library'));
+  // 프로젝트 허브 이벤트
+  root.querySelector('#mobile-new-project-btn')?.addEventListener('click', async () => {
+    await createMobileProject({ title: '모바일 프로젝트' });
+    await renderMobileHome();
+  });
+  root.querySelectorAll('[data-mobile-project-id]').forEach(btn => {
+    btn.addEventListener('click', async () => selectMobileProject(btn.dataset.mobileProjectId));
+  });
 }
 
 /* ────────────────────────────────────────────────────────────
@@ -52081,6 +52201,505 @@ function selectMobileCharacter(characterId) {
 }
 window.selectMobileCharacter = selectMobileCharacter;
 
+/* ────────────────────────────────────────────────────────────
+   § 4차. 프로젝트 헬퍼 함수
+   ──────────────────────────────────────────────────────────── */
+async function getMobileProjects() {
+  try {
+    if (!window.SoavizDB?.db?.projects) return [];
+    await SoavizDB.ready;
+    const projects = await SoavizDB.db.projects.toArray();
+    return projects
+      .filter(p => !p.archived)
+      .sort((a, b) => {
+        const av = new Date(a.updatedAt || a.createdAt || 0).getTime();
+        const bv = new Date(b.updatedAt || b.createdAt || 0).getTime();
+        return bv - av;
+      });
+  } catch (e) {
+    console.warn('[mobile] getMobileProjects failed', e);
+    return [];
+  }
+}
+async function ensureMobileCurrentProject() {
+  try {
+    const projects = await getMobileProjects();
+    if (MobileState.currentProjectId) {
+      const current = projects.find(p => p.id === MobileState.currentProjectId);
+      if (current) return current;
+    }
+    const first = projects[0];
+    if (first) {
+      MobileState.currentProjectId = first.id;
+      if (typeof saveMobileRuntimeState === 'function') saveMobileRuntimeState();
+      if (window.SoavizPipeline?.setProject) {
+        try { await SoavizPipeline.setProject(first.id); } catch (_) {}
+      }
+      return first;
+    }
+    return null;
+  } catch (e) {
+    console.warn('[mobile] ensureMobileCurrentProject failed', e);
+    return null;
+  }
+}
+async function createMobileProject(input = {}) {
+  try {
+    if (!window.SoavizDB?.db?.projects) {
+      if (typeof showToast === 'function') showToast('projects 테이블을 찾을 수 없습니다', 'error');
+      return null;
+    }
+    await SoavizDB.ready;
+    const now = new Date().toISOString();
+    const id = `mobile_project_${Date.now()}`;
+    const project = {
+      id,
+      title:  input.title || '모바일 프로젝트',
+      story:  input.story || '',
+      genre:  input.genre || '',
+      tone:   input.tone || MobileState.selectedTone || 'cinematic',
+      source: 'mobile-app-mode',
+      status: 'active',
+      createdAt: now,
+      updatedAt: now,
+      archived: false
+    };
+    await SoavizDB.db.projects.put(project);
+    MobileState.currentProjectId = id;
+    if (typeof saveMobileRuntimeState === 'function') saveMobileRuntimeState();
+    if (window.SoavizPipeline?.setProject) {
+      try { await SoavizPipeline.setProject(id); } catch (_) {}
+    }
+    if (typeof showToast === 'function') showToast('모바일 프로젝트 생성 완료');
+    return project;
+  } catch (e) {
+    console.error('[mobile] create project failed', e);
+    if (typeof showToast === 'function') showToast('프로젝트 생성 실패', 'error');
+    return null;
+  }
+}
+async function selectMobileProject(projectId) {
+  if (!projectId) return;
+  MobileState.currentProjectId = projectId;
+  if (typeof saveMobileRuntimeState === 'function') saveMobileRuntimeState();
+  if (window.SoavizPipeline?.setProject) {
+    try { await SoavizPipeline.setProject(projectId); } catch (_) {}
+  }
+  if (typeof showToast === 'function') showToast('프로젝트 선택 완료');
+  if (typeof renderMobileHome === 'function') await renderMobileHome();
+  if (typeof renderMobileProduction === 'function') await renderMobileProduction();
+}
+window.getMobileProjects        = getMobileProjects;
+window.ensureMobileCurrentProject = ensureMobileCurrentProject;
+window.createMobileProject      = createMobileProject;
+window.selectMobileProject      = selectMobileProject;
+
+/* ── Pipeline Bundle 수집 ────────────────────────────────────── */
+async function getMobilePipelineBundle(projectId) {
+  projectId = projectId || MobileState.currentProjectId;
+  const bundle = { project: null, episodes: [], scenes: [], shots: [], characters: [], worldBible: null, prompts: [], assets: [] };
+  try {
+    if (!projectId || !window.SoavizDB?.db) return bundle;
+    await SoavizDB.ready;
+    bundle.project    = await SoavizDB.db.projects.get(projectId).catch(() => null);
+    bundle.worldBible = bundle.project?.worldBible || null;
+    if (SoavizDB.db.characters) {
+      const allChars = await SoavizDB.db.characters.toArray().catch(() => []);
+      bundle.characters = allChars.filter(c => !c.archived && c.projectId === projectId);
+    }
+    if (window.SoavizPipeline?.listEpisodes) {
+      const episodes = await SoavizPipeline.listEpisodes(projectId).catch(() => []);
+      bundle.episodes = episodes || [];
+      for (const ep of bundle.episodes) {
+        const scenes = await SoavizPipeline.listScenes(ep.id).catch(() => []);
+        for (const sc of scenes || []) {
+          bundle.scenes.push(sc);
+          const shots = await SoavizPipeline.listShots(sc.id).catch(() => []);
+          for (const sh of shots || []) {
+            bundle.shots.push({ ...sh, episodeId: ep.id, episodeTitle: ep.title || ep.name || '', sceneId: sc.id, sceneTitle: sc.title || sc.name || '' });
+          }
+        }
+      }
+    } else {
+      if (SoavizDB.db.episodes) {
+        const eps = await SoavizDB.db.episodes.toArray().catch(() => []);
+        bundle.episodes = eps.filter(ep => ep.projectId === projectId);
+      }
+      if (SoavizDB.db.scenes) {
+        const scs = await SoavizDB.db.scenes.toArray().catch(() => []);
+        bundle.scenes = scs.filter(sc => sc.projectId === projectId || bundle.episodes.some(ep => ep.id === sc.episodeId || sc.parentId === ep.id));
+      }
+      if (SoavizDB.db.shots) {
+        const shs = await SoavizDB.db.shots.toArray().catch(() => []);
+        bundle.shots = shs.filter(sh => sh.projectId === projectId || bundle.scenes.some(sc => sc.id === sh.sceneId || sh.parentId === sc.id));
+      }
+    }
+    if (SoavizDB.db.prompts) {
+      const allPrompts = await SoavizDB.db.prompts.toArray().catch(() => []);
+      bundle.prompts = allPrompts.filter(p => !p.archived && p.projectId === projectId);
+    }
+    if (SoavizDB.db.assets) {
+      const allAssets = await SoavizDB.db.assets.toArray().catch(() => []);
+      bundle.assets = allAssets.filter(a => !a.archived && a.projectId === projectId);
+    }
+    return bundle;
+  } catch (e) {
+    console.warn('[mobile] getMobilePipelineBundle failed', e);
+    return bundle;
+  }
+}
+window.getMobilePipelineBundle = getMobilePipelineBundle;
+
+/* ────────────────────────────────────────────────────────────
+   § 4차. 샷/프롬프트/Export 헬퍼
+   ──────────────────────────────────────────────────────────── */
+function buildShotPromptText(shot, bundle) {
+  const world = bundle.worldBible;
+  const base = [shot.prompt, shot.imagePrompt, shot.visualPrompt, shot.description, shot.action].filter(Boolean).join(', ');
+  const camera    = shot.camera || shot.cameraMove || shot.angle || '';
+  const mood      = shot.emotion || shot.mood || '';
+  const worldTone = world?.imagePromptBase || world?.visualTone || '';
+  return [base, camera ? `camera: ${camera}` : '', mood ? `mood: ${mood}` : '', worldTone].filter(Boolean).join(', ');
+}
+window.buildShotPromptText = buildShotPromptText;
+
+function getMobilePromptItems(bundle) {
+  const items = [];
+  for (const shot of bundle.shots || []) {
+    const imagePrompt = buildShotPromptText(shot, bundle);
+    if (imagePrompt) items.push({ id: `image_prompt_${shot.id}`, type: 'image-prompt', title: shot.title || shot.name || shot.action || 'Shot Image Prompt', text: imagePrompt, shotId: shot.id });
+    const videoPrompt = [shot.motionPrompt, shot.videoPrompt, shot.cameraMove, shot.action, bundle.worldBible?.videoPromptBase].filter(Boolean).join(', ');
+    if (videoPrompt) items.push({ id: `video_prompt_${shot.id}`, type: 'video-prompt', title: `${shot.title || shot.name || 'Shot'} · Video`, text: videoPrompt, shotId: shot.id });
+  }
+  for (const p of bundle.prompts || []) {
+    const text = p.text || p.prompt || p.content || '';
+    if (!text) continue;
+    items.push({ id: p.id, type: p.type || 'prompt', title: p.title || p.name || 'Saved Prompt', text, promptId: p.id });
+  }
+  return items;
+}
+window.getMobilePromptItems = getMobilePromptItems;
+
+async function saveMobilePromptAsset(item, bundle) {
+  try {
+    if (!window.SoavizDB?.db) return false;
+    await SoavizDB.ready;
+    const now = Date.now();
+    const projectId = bundle.project?.id || MobileState.currentProjectId || null;
+    const rec = {
+      id: `mobile_prompt_${now}_${Math.random().toString(36).slice(2)}`,
+      projectId,
+      type: item.type || 'prompt',
+      title: item.title || 'Mobile Prompt',
+      text: item.text,
+      prompt: item.text,
+      source: 'mobile-production',
+      status: 'done',
+      storageTier: 'hot',
+      archived: false,
+      createdAt: now,
+      updatedAt: now
+    };
+    if (SoavizDB.db.prompts)  await SoavizDB.db.prompts.put(rec).catch(() => {});
+    if (SoavizDB.db.assets)   await SoavizDB.db.assets.put({ ...rec, type: 'prompt' }).catch(() => {});
+    if (typeof showToast === 'function') showToast('프롬프트 저장 완료');
+    return true;
+  } catch (e) {
+    console.warn('[mobile] saveMobilePromptAsset failed', e);
+    if (typeof showToast === 'function') showToast('프롬프트 저장 실패', 'error');
+    return false;
+  }
+}
+async function saveMobileShotAsset(shot, bundle) {
+  try {
+    if (!window.SoavizDB?.db?.assets) { if (typeof showToast === 'function') showToast('assets 테이블 없음', 'error'); return false; }
+    await SoavizDB.ready;
+    const now = Date.now();
+    const promptText = buildShotPromptText(shot, bundle);
+    await SoavizDB.db.assets.put({
+      id: `mobile_shot_asset_${now}_${shot.id}`,
+      projectId: bundle.project?.id || MobileState.currentProjectId || null,
+      type: 'shot-prompt',
+      title: shot.title || shot.name || shot.action || 'Shot Prompt',
+      text: promptText,
+      prompt: promptText,
+      shotId: shot.id,
+      source: 'mobile-shot-card',
+      status: 'done',
+      storageTier: 'hot',
+      archived: false,
+      createdAt: now,
+      updatedAt: now
+    });
+    if (typeof showToast === 'function') showToast('샷 프롬프트 저장 완료');
+    return true;
+  } catch (e) {
+    console.warn('[mobile] saveMobileShotAsset failed', e);
+    if (typeof showToast === 'function') showToast('샷 저장 실패', 'error');
+    return false;
+  }
+}
+window.saveMobilePromptAsset = saveMobilePromptAsset;
+window.saveMobileShotAsset   = saveMobileShotAsset;
+
+function buildMobileExportPayload(bundle) {
+  return {
+    app: 'soaviz-studio', kind: 'mobile-production-export',
+    exportedAt: new Date().toISOString(),
+    project: bundle.project, worldBible: bundle.worldBible,
+    characters: bundle.characters, episodes: bundle.episodes,
+    scenes: bundle.scenes, shots: bundle.shots,
+    prompts: getMobilePromptItems(bundle), assets: bundle.assets
+  };
+}
+function buildMobileExportText(bundle) {
+  const payload = buildMobileExportPayload(bundle);
+  const lines = [];
+  lines.push(`# ${payload.project?.title || 'SOAVIZ Project'}`);
+  lines.push('');
+  lines.push(`Exported At: ${payload.exportedAt}`);
+  lines.push('');
+  if (payload.project?.story) { lines.push('## Story'); lines.push(payload.project.story); lines.push(''); }
+  if (payload.worldBible) {
+    lines.push('## World Bible');
+    lines.push(`Title: ${payload.worldBible.title || ''}`);
+    lines.push(`Era: ${payload.worldBible.era || ''}`);
+    lines.push(`Conflict: ${payload.worldBible.conflict || ''}`);
+    lines.push(`Visual Tone: ${payload.worldBible.visualTone || ''}`);
+    lines.push('');
+  }
+  lines.push('## Characters');
+  payload.characters.forEach(c => lines.push(`- ${c.name || 'Unnamed'} / ${c.role || ''} / ${c.className || ''}`));
+  lines.push('');
+  lines.push('## Shots');
+  payload.shots.forEach((s, i) => {
+    lines.push(`${i + 1}. ${s.title || s.name || s.action || 'Untitled Shot'}`);
+    if (s.description) lines.push(`   ${s.description}`);
+    if (s.prompt || s.imagePrompt) lines.push(`   Prompt: ${s.prompt || s.imagePrompt}`);
+  });
+  lines.push('');
+  lines.push('## Prompts');
+  payload.prompts.forEach((p, i) => { lines.push(`${i + 1}. [${p.type}] ${p.title}`); lines.push(p.text); lines.push(''); });
+  return lines.join('\n');
+}
+window.buildMobileExportPayload = buildMobileExportPayload;
+window.buildMobileExportText    = buildMobileExportText;
+
+/* ────────────────────────────────────────────────────────────
+   § 4차. Production 서브뷰 렌더 함수
+   ──────────────────────────────────────────────────────────── */
+function renderMobileProductionSummary(bundle) {
+  const project = bundle.project;
+  if (!project) {
+    return `
+      <section class="mobile-section mobile-card" style="text-align:center;padding:30px 18px;">
+        <div style="font-size:34px;margin-bottom:12px;">▦</div>
+        <strong>선택된 프로젝트가 없습니다</strong>
+        <p style="margin:8px 0 18px;color:var(--text-faint);font-size:13px;">스토리를 입력하거나 새 프로젝트를 먼저 만드세요.</p>
+        <button class="mobile-primary-btn" id="mobile-prod-start-story">스토리부터 시작</button>
+      </section>`;
+  }
+  return `
+    <section class="mobile-section mobile-hero-card">
+      <div style="font-size:12px;color:var(--accent);font-weight:900;margin-bottom:8px;">PRODUCTION SUMMARY</div>
+      <h2 style="margin:0;font-size:22px;">${escapeHTML(project.title || 'Untitled Project')}</h2>
+      <p style="margin:10px 0 0;color:var(--text-dim);font-size:13px;line-height:1.55;">
+        ${escapeHTML((project.story || project.logline || '스토리 정보가 없습니다.').slice(0, 140))}
+      </p>
+    </section>
+    <section class="mobile-section mobile-grid-2">
+      <div class="mobile-card"><div style="color:var(--text-faint);font-size:12px;">Characters</div><strong style="font-size:24px;">${bundle.characters.length}</strong></div>
+      <div class="mobile-card"><div style="color:var(--text-faint);font-size:12px;">Shots</div><strong style="font-size:24px;">${bundle.shots.length}</strong></div>
+      <div class="mobile-card"><div style="color:var(--text-faint);font-size:12px;">Scenes</div><strong style="font-size:24px;">${bundle.scenes.length}</strong></div>
+      <div class="mobile-card"><div style="color:var(--text-faint);font-size:12px;">World</div><strong style="font-size:16px;">${bundle.worldBible ? 'Ready' : 'Empty'}</strong></div>
+    </section>
+    <section class="mobile-section mobile-card">
+      <strong>다음 액션</strong>
+      <div style="display:grid;gap:10px;margin-top:14px;">
+        <button class="mobile-secondary-btn" id="mobile-open-shots">샷리스트 보기</button>
+        <button class="mobile-secondary-btn" id="mobile-open-prompts">프롬프트 복사하기</button>
+        <button class="mobile-primary-btn"   id="mobile-open-export">프로젝트 내보내기</button>
+      </div>
+    </section>`;
+}
+
+function renderMobileShotCards(bundle) {
+  const shots = bundle.shots || [];
+  if (!shots.length) {
+    return `
+      <section class="mobile-section mobile-card" style="text-align:center;padding:28px 16px;">
+        <div style="font-size:32px;margin-bottom:10px;">▧</div>
+        <strong>아직 생성된 샷이 없습니다</strong>
+        <p style="margin:8px 0 18px;color:var(--text-faint);font-size:13px;">스토리를 Pipeline으로 보내면 샷리스트가 생성됩니다.</p>
+        <button class="mobile-primary-btn" id="mobile-shot-start-story">스토리 입력하기</button>
+      </section>`;
+  }
+  return `
+    <section class="mobile-section">
+      <h3 class="mobile-section-title">샷리스트 ${shots.length}개</h3>
+      <div class="mobile-list">
+        ${shots.map((shot, index) => {
+          const promptText = buildShotPromptText(shot, bundle);
+          return `
+            <article class="mobile-shot-card" data-shot-id="${escapeHTML(shot.id)}">
+              <div class="mobile-shot-head">
+                <span>SHOT ${String(index + 1).padStart(2, '0')}</span>
+                <small>${escapeHTML(shot.sceneTitle || shot.sceneId || '')}</small>
+              </div>
+              <strong>${escapeHTML(shot.title || shot.name || shot.action || 'Untitled Shot')}</strong>
+              <p>${escapeHTML((shot.description || shot.action || shot.summary || '').slice(0, 160))}</p>
+              <div class="mobile-shot-meta">
+                ${shot.camera  ? `<span>${escapeHTML(shot.camera)}</span>`  : ''}
+                ${shot.emotion ? `<span>${escapeHTML(shot.emotion)}</span>` : ''}
+                ${shot.duration ? `<span>${escapeHTML(String(shot.duration))}s</span>` : ''}
+              </div>
+              <div class="mobile-grid-2" style="margin-top:12px;">
+                <button class="mobile-secondary-btn" data-copy-shot-prompt="${escapeHTML(shot.id)}">프롬프트 복사</button>
+                <button class="mobile-secondary-btn" data-save-shot-asset="${escapeHTML(shot.id)}">보관함 저장</button>
+              </div>
+            </article>`;
+        }).join('')}
+      </div>
+    </section>`;
+}
+
+function renderMobilePromptCards(bundle) {
+  const items = getMobilePromptItems(bundle);
+  if (!items.length) {
+    return `
+      <section class="mobile-section mobile-card" style="text-align:center;padding:28px 16px;">
+        <div style="font-size:32px;margin-bottom:10px;">✎</div>
+        <strong>복사할 프롬프트가 없습니다</strong>
+        <p style="margin:8px 0 0;color:var(--text-faint);font-size:13px;">샷리스트가 생성되면 이미지/영상 프롬프트가 표시됩니다.</p>
+      </section>`;
+  }
+  return `
+    <section class="mobile-section">
+      <h3 class="mobile-section-title">프롬프트 ${items.length}개</h3>
+      <div class="mobile-list">
+        ${items.map(item => `
+          <article class="mobile-prompt-card">
+            <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
+              <strong>${escapeHTML(item.title)}</strong>
+              <span class="mobile-mini-badge">${escapeHTML(item.type)}</span>
+            </div>
+            <p>${escapeHTML(item.text.slice(0, 220))}</p>
+            <div class="mobile-grid-2" style="margin-top:12px;">
+              <button class="mobile-secondary-btn" data-copy-mobile-prompt="${escapeHTML(item.id)}">복사</button>
+              <button class="mobile-secondary-btn" data-save-mobile-prompt="${escapeHTML(item.id)}">저장</button>
+            </div>
+          </article>`).join('')}
+      </div>
+    </section>`;
+}
+
+function renderMobileExportPanel(bundle) {
+  return `
+    <section class="mobile-section mobile-card">
+      <strong>프로젝트 내보내기</strong>
+      <p style="margin:8px 0 16px;color:var(--text-dim);font-size:13px;line-height:1.55;">
+        현재 프로젝트의 스토리, 캐릭터, 월드 바이블, 샷리스트, 프롬프트를 저장합니다.
+      </p>
+      <div class="mobile-grid-2">
+        <button class="mobile-secondary-btn${MobileState.exportFormat === 'json' ? ' active' : ''}" data-export-format="json">JSON</button>
+        <button class="mobile-secondary-btn${MobileState.exportFormat === 'txt'  ? ' active' : ''}" data-export-format="txt">TXT</button>
+      </div>
+      <div style="display:grid;gap:10px;margin-top:14px;">
+        <button class="mobile-primary-btn"  id="mobile-download-export">다운로드</button>
+        <button class="mobile-secondary-btn" id="mobile-copy-export">전체 복사</button>
+        <button class="mobile-secondary-btn" id="mobile-share-export">공유</button>
+      </div>
+    </section>`;
+}
+
+function bindMobileProductionEvents(root, bundle) {
+  root.querySelectorAll('[data-prod-view]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      MobileState.productionView = btn.dataset.prodView;
+      if (typeof saveMobileRuntimeState === 'function') saveMobileRuntimeState();
+      renderMobileProduction();
+    });
+  });
+  root.querySelector('#mobile-prod-start-story')?.addEventListener('click', () => MobileApp.go('story'));
+  root.querySelector('#mobile-shot-start-story')?.addEventListener('click', () => MobileApp.go('story'));
+  root.querySelector('#mobile-open-shots')?.addEventListener('click', () => {
+    MobileState.productionView = 'shots';
+    if (typeof saveMobileRuntimeState === 'function') saveMobileRuntimeState();
+    renderMobileProduction();
+  });
+  root.querySelector('#mobile-open-prompts')?.addEventListener('click', () => {
+    MobileState.productionView = 'prompts';
+    if (typeof saveMobileRuntimeState === 'function') saveMobileRuntimeState();
+    renderMobileProduction();
+  });
+  root.querySelector('#mobile-open-export')?.addEventListener('click', () => {
+    MobileState.productionView = 'export';
+    if (typeof saveMobileRuntimeState === 'function') saveMobileRuntimeState();
+    renderMobileProduction();
+  });
+  root.querySelector('#mobile-prod-go-library')?.addEventListener('click', () => MobileApp.go('library'));
+  root.querySelectorAll('[data-copy-shot-prompt]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const shot = bundle.shots.find(x => x.id === btn.dataset.copyShotPrompt);
+      if (!shot) return;
+      if (typeof copyText === 'function') await copyText(buildShotPromptText(shot, bundle));
+      if (typeof showToast === 'function') showToast('샷 프롬프트 복사 완료');
+    });
+  });
+  root.querySelectorAll('[data-save-shot-asset]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const shot = bundle.shots.find(x => x.id === btn.dataset.saveShotAsset);
+      if (shot) await saveMobileShotAsset(shot, bundle);
+    });
+  });
+  root.querySelectorAll('[data-copy-mobile-prompt]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const item = getMobilePromptItems(bundle).find(x => x.id === btn.dataset.copyMobilePrompt);
+      if (!item) return;
+      if (typeof copyText === 'function') await copyText(item.text);
+      if (typeof showToast === 'function') showToast('프롬프트 복사 완료');
+    });
+  });
+  root.querySelectorAll('[data-save-mobile-prompt]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const item = getMobilePromptItems(bundle).find(x => x.id === btn.dataset.saveMobilePrompt);
+      if (item) await saveMobilePromptAsset(item, bundle);
+    });
+  });
+  root.querySelectorAll('[data-export-format]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      MobileState.exportFormat = btn.dataset.exportFormat;
+      if (typeof saveMobileRuntimeState === 'function') saveMobileRuntimeState();
+      renderMobileProduction();
+    });
+  });
+  root.querySelector('#mobile-download-export')?.addEventListener('click', () => {
+    const payload = buildMobileExportPayload(bundle);
+    const date = new Date().toISOString().slice(0, 10);
+    const safeTitle = String(bundle.project?.title || 'soaviz-project').replace(/[^\w가-힣-]+/g, '_');
+    if (MobileState.exportFormat === 'txt') {
+      if (typeof downloadBlob === 'function') downloadBlob(new Blob([buildMobileExportText(bundle)], { type: 'text/plain;charset=utf-8' }), `soaviz_${safeTitle}_${date}.txt`);
+    } else {
+      if (typeof downloadBlob === 'function') downloadBlob(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }), `soaviz_${safeTitle}_${date}.json`);
+    }
+    if (typeof showToast === 'function') showToast('내보내기 완료');
+  });
+  root.querySelector('#mobile-copy-export')?.addEventListener('click', async () => {
+    if (typeof copyText === 'function') await copyText(buildMobileExportText(bundle));
+    if (typeof showToast === 'function') showToast('프로젝트 텍스트 복사 완료');
+  });
+  root.querySelector('#mobile-share-export')?.addEventListener('click', async () => {
+    const text  = buildMobileExportText(bundle);
+    const title = bundle.project?.title || 'SOAVIZ Project';
+    if (navigator.share) {
+      try { await navigator.share({ title, text }); return; } catch (_) {}
+    }
+    if (typeof copyText === 'function') await copyText(text);
+    if (typeof showToast === 'function') showToast('공유가 지원되지 않아 텍스트를 복사했습니다');
+  });
+}
+window.bindMobileProductionEvents = bindMobileProductionEvents;
+
 /* ── 런타임 상태 저장/복원 ─────────────────────────────────────── */
 const MOBILE_STATE_KEY = 'soaviz.mobile.state.v1';
 function saveMobileRuntimeState() {
@@ -52089,7 +52708,11 @@ function saveMobileRuntimeState() {
       current:             MobileApp?.current || 'home',
       selectedTone:        MobileState.selectedTone,
       selectedCharacterId: MobileState.selectedCharacterId,
-      characterMode:       MobileState.characterMode || 'home'
+      characterMode:       MobileState.characterMode || 'home',
+      currentProjectId:    MobileState.currentProjectId,
+      productionView:      MobileState.productionView || 'summary',
+      selectedShotId:      MobileState.selectedShotId,
+      exportFormat:        MobileState.exportFormat || 'json'
     }));
   } catch (_) {}
 }
@@ -52101,6 +52724,10 @@ function restoreMobileRuntimeState() {
     if (data.selectedTone)        MobileState.selectedTone = data.selectedTone;
     if (data.selectedCharacterId) MobileState.selectedCharacterId = data.selectedCharacterId;
     if (data.characterMode)       MobileState.characterMode = data.characterMode;
+    if (data.currentProjectId)    MobileState.currentProjectId = data.currentProjectId;
+    if (data.productionView)      MobileState.productionView = data.productionView;
+    if (data.selectedShotId)      MobileState.selectedShotId = data.selectedShotId;
+    if (data.exportFormat)        MobileState.exportFormat = data.exportFormat;
     if (data.current && window.MobileApp?.go) {
       setTimeout(() => MobileApp.go(data.current), 0);
     }
@@ -52198,84 +52825,37 @@ async function renderMobileProduction() {
   const root = document.getElementById('mobile-screen-production');
   if (!root) return;
 
-  const summary = await getMobileProductionSummary();
-  const hasProject  = Boolean(summary.projectId || (summary.projectTitle && summary.projectTitle !== '선택된 프로젝트 없음'));
-  const updatedLabel = summary.updatedAt
-    ? new Date(summary.updatedAt).toLocaleDateString('ko-KR', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })
-    : '—';
-  const worldBibleIcon = summary.hasWorldBible ? '✓ 완료' : '—';
+  const project = await ensureMobileCurrentProject();
+  const bundle  = await getMobilePipelineBundle(project?.id || MobileState.currentProjectId);
 
-  if (!hasProject) {
-    root.innerHTML = `
-      <section>
-        <h1 class="mobile-page-title">제작</h1>
-        <p class="mobile-page-sub">캐릭터, 세계관, 샷리스트를 확인하고 다음 제작 단계로 이동합니다.</p>
-      </section>
-      <section class="mobile-section mobile-card" style="text-align:center;padding:36px 18px">
-        <div style="font-size:42px;margin-bottom:14px">🎬</div>
-        <strong style="font-size:17px">아직 프로젝트가 없습니다</strong>
-        <p style="margin:10px 0 22px;color:var(--text-faint);font-size:13px;line-height:1.55">
-          스토리를 작성하고 Pipeline을 생성하면<br>캐릭터, World Bible, 샷리스트가 만들어집니다.
-        </p>
-        <button class="mobile-primary-btn" id="mobile-prod-start-story">스토리부터 시작하기</button>
-      </section>
-    `;
-    root.querySelector('#mobile-prod-start-story')?.addEventListener('click', () => MobileApp.go('story'));
-    return;
-  }
-
+  const view = MobileState.productionView || 'summary';
   root.innerHTML = `
     <section>
       <h1 class="mobile-page-title">제작</h1>
-      <p class="mobile-page-sub">캐릭터, 세계관, 샷리스트를 확인하고 다음 제작 단계로 이동합니다.</p>
+      <p class="mobile-page-sub">샷리스트와 프롬프트를 모바일에서 확인하고 내보냅니다.</p>
     </section>
-    <section class="mobile-section mobile-hero-card">
-      <div style="font-size:12px;color:var(--accent);font-weight:800;margin-bottom:6px;letter-spacing:0.06em">CURRENT PROJECT</div>
-      <h2 style="margin:0 0 4px;font-size:20px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-        ${escapeHTML(summary.projectTitle)}
-      </h2>
-      <p style="margin:0 0 16px;color:var(--text-faint);font-size:12px">마지막 업데이트 ${updatedLabel}</p>
-      <div class="mobile-grid-2" style="gap:8px">
-        <div style="background:rgba(0,0,0,0.18);border-radius:14px;padding:12px">
-          <div style="font-size:22px;font-weight:800">${summary.characters}</div>
-          <div style="font-size:11px;color:var(--text-faint);font-weight:700;margin-top:2px">캐릭터</div>
-        </div>
-        <div style="background:rgba(0,0,0,0.18);border-radius:14px;padding:12px">
-          <div style="font-size:22px;font-weight:800">${summary.shots}</div>
-          <div style="font-size:11px;color:var(--text-faint);font-weight:700;margin-top:2px">샷</div>
-        </div>
-        <div style="background:rgba(0,0,0,0.18);border-radius:14px;padding:12px">
-          <div style="font-size:15px;font-weight:800;color:${summary.hasWorldBible ? 'var(--accent)' : 'var(--text-faint)'}">${worldBibleIcon}</div>
-          <div style="font-size:11px;color:var(--text-faint);font-weight:700;margin-top:2px">World Bible</div>
-        </div>
-        <div style="background:rgba(0,0,0,0.18);border-radius:14px;padding:12px">
-          <div style="font-size:15px;font-weight:800;color:var(--accent)">Ready</div>
-          <div style="font-size:11px;color:var(--text-faint);font-weight:700;margin-top:2px">상태</div>
-        </div>
+    <section class="mobile-section">
+      <div class="mobile-chip-row mobile-production-tabs">
+        <button class="mobile-chip${view === 'summary'  ? ' active' : ''}" data-prod-view="summary">요약</button>
+        <button class="mobile-chip${view === 'shots'    ? ' active' : ''}" data-prod-view="shots">샷</button>
+        <button class="mobile-chip${view === 'prompts'  ? ' active' : ''}" data-prod-view="prompts">프롬프트</button>
+        <button class="mobile-chip${view === 'export'   ? ' active' : ''}" data-prod-view="export">내보내기</button>
       </div>
     </section>
-    <section class="mobile-section mobile-card">
-      <strong>Pre-Production Stack</strong>
-      <p style="margin:8px 0 16px;color:var(--text-dim);font-size:13px;line-height:1.55">
-        Character Pack, World Bible, Shotlist는 Pipeline 전체 화면에서 확인할 수 있습니다.
-      </p>
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <button class="mobile-secondary-btn" id="mobile-open-pipeline">Pipeline 전체 보기</button>
-        <button class="mobile-secondary-btn" id="mobile-prod-go-library">보관함 보기</button>
-      </div>
-    </section>
-    <section class="mobile-section mobile-card">
-      <strong>다음 작업</strong>
-      <p style="margin:8px 0 16px;color:var(--text-dim);font-size:13px;line-height:1.55">
-        샷리스트가 준비되면 이미지/영상 프롬프트로 이어갈 수 있습니다.
-      </p>
-      <button class="mobile-primary-btn" id="mobile-go-story">스토리 다시 생성</button>
+    <div id="mobile-production-view-root">
+      ${view === 'shots'   ? renderMobileShotCards(bundle)
+      : view === 'prompts' ? renderMobilePromptCards(bundle)
+      : view === 'export'  ? renderMobileExportPanel(bundle)
+      :                      renderMobileProductionSummary(bundle)}
+    </div>
+    <section class="mobile-section">
+      <button class="mobile-secondary-btn" id="mobile-open-pipeline">Pipeline 전체 보기</button>
     </section>
   `;
+  bindMobileProductionEvents(root, bundle);
   root.querySelector('#mobile-open-pipeline')?.addEventListener('click', async () => await MobileActions.openPipeline());
-  root.querySelector('#mobile-go-story')?.addEventListener('click', () => MobileApp.go('story'));
-  root.querySelector('#mobile-prod-go-library')?.addEventListener('click', () => MobileApp.go('library'));
 }
+window.renderMobileProduction = renderMobileProduction;
 
 /* ────────────────────────────────────────────────────────────
    § 15. 화면 렌더: 보관함
