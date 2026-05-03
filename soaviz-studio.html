@@ -14209,6 +14209,38 @@
       .ck-tabs { overflow-x: auto; }
       .ck-tab { padding: 7px 10px; font-size: 11px; }
     }
+    /* ── Key Image Badge & Library ─────────────── */
+    .ch-pill.keyimage-done {
+      background: rgba(96,165,250,0.18);
+      color: #60a5fa;
+      border: 1px solid rgba(96,165,250,0.35);
+    }
+    .ki-lib-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 14px;
+      padding: 4px 0;
+    }
+    .ki-lib-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: border-color .15s, transform .15s;
+    }
+    .ki-lib-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .ki-lib-thumb {
+      width: 100%; aspect-ratio: 1/1;
+      object-fit: cover; display: block;
+      background: var(--bg);
+    }
+    .ki-lib-thumb.ki-placeholder {
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px; background: var(--bg-card);
+    }
+    .ki-lib-body { padding: 10px 12px 12px; }
+    /* ─────────────────────────────────────────── */
+
     /* ── CK Studio Phase 2 ─────────────────────── */
     /* Section head */
     .ck-section-head { font-size: 12px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; }
@@ -21212,6 +21244,10 @@
           <svg class="icon" viewBox="0 0 24 24" style="width:12px;height:12px;stroke-width:1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
           샷리스트 <span class="lib-count" id="lib-count-shotlist">0</span>
         </button>
+        <button class="lib-tab" data-lib="character-key-image">
+          <svg class="icon" viewBox="0 0 24 24" style="width:12px;height:12px;stroke-width:1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/><path d="M16 5l2 2"/></svg>
+          키이미지 <span class="lib-count" id="lib-count-character-key-image">0</span>
+        </button>
       </div>
 
       <!-- ═══ Library 빠른 날짜 필터 (모든 카테고리 공통) ═══ -->
@@ -21277,6 +21313,8 @@
 
       <!-- ═══ 샷리스트 라이브러리 패널 ═══ -->
       <div id="lib-shotlist-panel" style="display:none"></div>
+
+      <div id="lib-keyimage-panel" style="display:none"></div>
 
       <div class="lib-grid" id="lib-grid"></div>
     </section>
@@ -37724,6 +37762,15 @@ function renderLibrary() {
     if (_slPanel) _slPanel.style.display = '';
     renderShotlistPanel();
     return;
+  } else if (libCurrentFilter === 'character-key-image') {
+    if (_promptUI) _promptUI.style.display = 'none';
+    if (_libGrid) _libGrid.style.display = 'none';
+    if (_scenPanel) _scenPanel.style.display = 'none';
+    if (_slPanel) _slPanel.style.display = 'none';
+    const _kiPanel = $('#lib-keyimage-panel');
+    if (_kiPanel) _kiPanel.style.display = '';
+    renderKeyImageLibraryPanel();
+    return;
   } else {
     if (_promptUI) _promptUI.style.display = 'none';
     if (_libGrid) _libGrid.style.display = '';
@@ -37772,7 +37819,15 @@ function renderLibrary() {
     transcript: items.filter(i => i.type === 'transcript').length,
     scenario:   _storyCache.length,
     shotlist:   _slSaved.length,
+    'character-key-image': 0,
   };
+  // 키이미지 카운트 비동기 업데이트
+  if (window.SoavizDB?.db?.assets) {
+    window.SoavizDB.db.assets.where('type').equals('character-key-image').count().then(n => {
+      const el = $('#lib-count-character-key-image');
+      if (el) el.textContent = n;
+    }).catch(() => {});
+  }
   // 카운트 배지 업데이트 — 모든 카테고리
   Object.entries(counts).forEach(([k, v]) => {
     const el = $(`#lib-count-${k}`);
@@ -38049,6 +38104,119 @@ function renderShotlistPanel() {
       showToast?.('삭제됐어요');
     });
   });
+}
+
+async function renderKeyImageLibraryPanel() {
+  const panel = $('#lib-keyimage-panel');
+  if (!panel) return;
+  panel.innerHTML = `<div class="lib-empty"><div class="big">◌</div><div>불러오는 중…</div></div>`;
+
+  let assets = [];
+  try {
+    if (window.SoavizDB?.db?.assets) {
+      assets = await window.SoavizDB.db.assets
+        .where('type').equals('character-key-image')
+        .filter(a => !a.archived)
+        .reverse()
+        .toArray();
+    }
+  } catch (e) { console.warn('[keyimage-lib]', e); }
+
+  if (!assets.length) {
+    panel.innerHTML = `<div class="lib-empty"><div class="big">🖼</div><div>저장된 키이미지가 없어요<br><small style="color:var(--text-faint)">캐릭터 → 키이미지 스튜디오에서 생성 후 대표 지정하면 여기 쌓입니다</small></div></div>`;
+    const cnt = $('#lib-count-character-key-image');
+    if (cnt) cnt.textContent = '0';
+    return;
+  }
+
+  const cnt = $('#lib-count-character-key-image');
+  if (cnt) cnt.textContent = assets.length;
+
+  const fmtDate = ts => {
+    if (!ts) return '';
+    const d = new Date(ts);
+    return d.toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' }) + ' ' + d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  // 캐릭터 이름 캐시
+  const charIds = [...new Set(assets.map(a => a.characterId).filter(Boolean))];
+  const charMap = {};
+  if (window.SoavizDB?.db?.characters && charIds.length) {
+    try {
+      const chars = await window.SoavizDB.db.characters.bulkGet(charIds);
+      chars.forEach(c => { if (c) charMap[c.id] = c; });
+    } catch (_) {}
+  }
+
+  panel.innerHTML = `<div class="ki-lib-grid">${assets.map((a, i) => {
+    const imgSrc = a.dataUrl || a.imageUrl || a.url || '';
+    const charName = a.characterId ? (charMap[a.characterId]?.name || '캐릭터') : '캐릭터';
+    const angleLabel = a.angle || '';
+    const statusBadge = a.status === 'approved' ? '<span class="ch-pill keyimage-done">대표 ✓</span>' : '';
+    return `
+      <div class="ki-lib-card" data-ki-idx="${i}" data-ki-id="${escapeHTML(a.id || '')}">
+        ${imgSrc
+          ? `<img class="ki-lib-thumb" src="${escapeHTML(imgSrc)}" alt="키이미지" loading="lazy" />`
+          : `<div class="ki-lib-thumb ki-placeholder">🖼</div>`}
+        <div class="ki-lib-body">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <span style="font-size:12px;font-weight:700;color:var(--text)">${escapeHTML(charName)}</span>
+            ${statusBadge}
+            ${angleLabel ? `<span class="ch-pill muted">${escapeHTML(angleLabel)}</span>` : ''}
+          </div>
+          <div style="font-size:10px;color:var(--text-faint);margin-top:2px">${fmtDate(a.updatedAt || a.createdAt)}</div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px">
+            ${a.characterId ? `<button class="lib-text-btn ki-goto" data-char-id="${escapeHTML(a.characterId)}">캐릭터 보기</button>` : ''}
+            ${imgSrc ? `<button class="lib-text-btn ki-dl" data-idx="${i}" data-char="${escapeHTML(charName)}">다운로드</button>` : ''}
+          </div>
+        </div>
+      </div>`;
+  }).join('')}</div>`;
+
+  // 이벤트 바인딩
+  panel.querySelectorAll('.ki-goto').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const charId = btn.dataset.charId;
+      if (!charId) return;
+      const navBtn = document.querySelector('[data-page="characters"]');
+      if (navBtn) { navBtn.click(); }
+      requestAnimationFrame(() => {
+        const chProject = document.querySelector('#ch-project-select');
+        if (chProject) chProject.dispatchEvent(new Event('change'));
+        openCharacterEditor?.(charId);
+      });
+    });
+  });
+  panel.querySelectorAll('.ki-dl').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const a_asset = assets[+btn.dataset.idx];
+      if (!a_asset) return;
+      const url = a_asset.dataUrl || a_asset.imageUrl || a_asset.url || '';
+      if (!url) return;
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `soaviz-keyimage-${(btn.dataset.char || 'character').replace(/\s+/g,'_')}.png`;
+      link.click();
+    });
+  });
+}
+
+function showKeyImageGuardToast(characterName, characterId) {
+  const msg = `"${characterName}" 캐릭터에 키이미지가 없어요. 키이미지 스튜디오에서 만들면 Shot 생성 일관성이 높아집니다.`;
+  if (typeof showToast === 'function') {
+    showToast(msg, 'warn');
+  }
+  // 스튜디오 바로가기 버튼이 있으면 실행
+  if (characterId && typeof openCharacterKeyImageStudio === 'function') {
+    setTimeout(() => {
+      const confirmed = window.confirm?.(`${msg}\n\n지금 키이미지 스튜디오를 열까요?`);
+      if (confirmed) {
+        const navBtn = document.querySelector('[data-page="characters"]');
+        if (navBtn) navBtn.click();
+        requestAnimationFrame(() => openCharacterKeyImageStudio(characterId));
+      }
+    }, 300);
+  }
 }
 
 // Decision 탭 클릭 바인딩 (Phase 1)
@@ -44655,6 +44823,7 @@ async function renderCharactersPage() {
               <span class="ch-pill ${ready.ready ? 'ready' : 'warn'}">${ready.ready ? 'Ready' : 'Need ' + ready.missing.length}</span>
               ${ready.hasPhoto ? '<span class="ch-pill ready">사진 있음</span>' : '<span class="ch-pill warn">No photo</span>'}
               ${ready.hasVoice ? '<span class="ch-pill ready">보이스 있음</span>' : '<span class="ch-pill muted">No voice</span>'}
+              ${c.keyImageUrl ? '<span class="ch-pill keyimage-done">키이미지 ✓</span>' : ''}
             </div>
           </div>
         </div>
@@ -46088,8 +46257,26 @@ async function openCharacterEditor(id, preset = null, defaultTab = null) {
   let _sheetSelectedAngles = new Set(['front']);
   let _sheetSelectedModels = new Set(['flash']);
   let _sheetRatio = '1:1';
-  let _sheetRefImage = null;
+  let _sheetRefImage = c.keyImageUrl || null;
   let _sheetResults = Array.isArray(c.sheetImages) ? [...c.sheetImages] : [];
+
+  // ── 키이미지 자동 참조 설정
+  if (_sheetRefImage) {
+    requestAnimationFrame(() => {
+      const uz = root.querySelector('#cf-sheet-upload-zone');
+      if (uz) {
+        uz.classList.add('has-file');
+        let img = uz.querySelector('.csheet-upload-preview');
+        if (!img) {
+          img = document.createElement('img');
+          img.className = 'csheet-upload-preview';
+          img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:8px;display:block';
+          uz.appendChild(img);
+        }
+        img.src = _sheetRefImage;
+      }
+    });
+  }
 
   // ── 탭 전환
   root.querySelectorAll('.cf-tab-btn').forEach(btn => {
@@ -46756,6 +46943,10 @@ async function _characterShotRows(characterProjectId = null) {
 async function openCharacterAssignModal(characterId) {
   const c = await SoavizDB.db.characters.get(characterId);
   if (!c) return;
+  // Guard: 키이미지 없으면 CTA 표시 (비차단)
+  if (!c.keyImageUrl && typeof showToast === 'function') {
+    showToast(`💡 "${c.name}"에 키이미지가 없어요 — 키이미지 스튜디오에서 생성하면 Shot 일관성이 높아집니다.`, 'info');
+  }
   const rows = await _characterShotRows(c.projectId);
   if (!rows.length) {
     showToast?.('연결할 Shot이 없어요. Pipeline에서 Episode/Scene/Shot을 먼저 만들어 주세요.', 'error');
