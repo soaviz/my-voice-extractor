@@ -49100,7 +49100,18 @@ function bindCharactersPage() {
   $('#ch-add-btn')?.addEventListener('click', () => openCharacterEditor(null));
   $('#ch-keyimage-studio-btn')?.addEventListener('click', () => {
     const ids = [...(CHARACTER_PAGE_STATE?.selected || [])];
-    openCharacterKeyImageStudio(ids.length > 0 ? ids[0] : null);
+    if (ids.length > 0) {
+      openCharacterKeyImageStudio(ids[0]);
+    } else {
+      // 선택된 캐릭터 없으면 첫 번째 캐릭터로 자동 진입 or 안내
+      const firstCard = document.querySelector('#ch-grid [data-ch-id]');
+      const firstId = firstCard?.dataset?.chId;
+      if (firstId) {
+        openCharacterKeyImageStudio(firstId);
+      } else {
+        showToast?.('캐릭터를 먼저 선택하거나 추가해 주세요', 'warn');
+      }
+    }
   });
   $('#ch-sheet-btn')?.addEventListener('click', () => openCharacterEditor(null, null, 'sheet'));
   $('#ch-project-select')?.addEventListener('change', () => renderCharactersPage());
