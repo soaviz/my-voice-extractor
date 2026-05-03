@@ -45431,7 +45431,9 @@ function openCharacterKeyImageStudio(id) {
   CHARACTER_PAGE_STATE.view = 'keyimage';
   CHARACTER_PAGE_STATE.activeCharacterId = id;
   CHARACTER_PAGE_STATE.returnScrollY = window.scrollY || 0;
-  renderCharactersPage();
+  // showPage가 page-characters 활성화 + renderCharactersPage() 트리거
+  if (typeof showPage === 'function') showPage('characters');
+  else renderCharactersPage();
 }
 function closeCharacterKeyImageStudio() {
   CHARACTER_PAGE_STATE.view = 'list';
