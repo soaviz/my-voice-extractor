@@ -14361,6 +14361,11 @@
     .ck-rb:hover { border-color: var(--accent); color: var(--accent); }
     .ck-rb-primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
     .ck-rb-primary:hover { opacity: .85; color: #fff; }
+    .ck-rb-action { background: rgba(var(--accent-rgb,99,102,241),.12); border-color: var(--accent); color: var(--accent); }
+    .ck-rb-action:hover:not(:disabled) { background: var(--accent); color: #fff; }
+    /* approved card */
+    .ck-result-card.approved-card { border: 2px solid #10b981; box-shadow: 0 0 0 2px rgba(16,185,129,.2); }
+    .approved-badge { background: #10b981 !important; color: #fff !important; }
     /* Empty results */
     .ck-empty-results {
       grid-column: 1 / -1; display: flex; flex-direction: column;
@@ -45134,6 +45139,50 @@ function _ckSettingsTab(c) {
   </div>`;
 }
 
+/* ── 결과 카드 렌더러 (독립 함수 — 재사용 가능) ── */
+function renderCKResultCard(character, img, index) {
+  const s = window.CharacterKeyImageStudio;
+  const hasUrl = !!(img.imageUrl || img.url);
+  const isMock = !!img.mock;
+  const safeId = escapeHTML(img.id);
+  const charName = escapeHTML(character.name || character.id || 'character');
+  const isSelected = s.selectedImageId === img.id;
+  const isApproved = img.status === 'approved';
+
+  // 버튼별 비활성 조건
+  const noUrlAttr  = hasUrl  ? '' : ' disabled title="이미지 URL 없음 (mock)"';
+  const noMockAttr = !isMock ? '' : ' disabled title="Mock 이미지는 지원되지 않음"';
+
+  return `
+    <article class="ck-result-card${isSelected ? ' selected-card' : ''}${isApproved ? ' approved-card' : ''}" data-result-id="${safeId}">
+      <div class="ck-result-thumb">
+        <span class="ck-result-index">${index + 1}</span>
+        ${isMock ? '<span class="ck-result-badge">MOCK</span>' : ''}
+        ${isApproved ? '<span class="ck-result-badge approved-badge">대표 ✓</span>' : ''}
+        ${hasUrl
+          ? `<img src="${escapeHTML(img.imageUrl || img.url)}" alt="key image ${index + 1}" loading="lazy">`
+          : `<div class="ck-mock-image">
+               <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+               <span>Mock</span>
+             </div>`}
+      </div>
+      <div class="ck-result-body">
+        <strong style="font-size:12px;display:block;margin-bottom:2px">${escapeHTML(img.title || 'Character Key Image')}</strong>
+        <p style="font-size:10px;color:var(--text-faint);margin:0 0 8px">${escapeHTML(img.model || s.modelId)} · ${escapeHTML(img.aspectRatio || s.aspectRatio)}${isMock ? ' · mock' : ''}</p>
+        <div class="ck-result-buttons">
+          <button class="ck-rb ck-rb-primary" data-approve-key-image="${safeId}"${isMock ? noMockAttr : ''}>대표 키이미지 지정</button>
+          <button class="ck-rb" data-set-key-avatar="${safeId}">아바타 지정</button>
+          <button class="ck-rb" data-save-key-reference="${safeId}">참조 저장</button>
+          <button class="ck-rb ck-rb-action" data-send-key-to-shot="${safeId}"${noUrlAttr}>Shot 레퍼런스로 보내기</button>
+          <button class="ck-rb ck-rb-action" data-send-key-to-sheet="${safeId}">캐릭터 시트에 추가</button>
+          <button class="ck-rb ck-rb-action" data-use-key-as-base="${safeId}">Variation 기준</button>
+          <button class="ck-rb" data-copy-key-url="${safeId}"${noUrlAttr}>URL 복사</button>
+          <button class="ck-rb" data-download-key-image="${safeId}" data-character-name="${charName}"${noUrlAttr}>다운로드</button>
+        </div>
+      </div>
+    </article>`;
+}
+
 function _ckResultsTab(c) {
   const s = window.CharacterKeyImageStudio;
   const images = s.generatedImages || [];
@@ -45146,27 +45195,7 @@ function _ckResultsTab(c) {
       </div>
     </div>
     ${images.length
-      ? `<div class="ck-result-grid">${images.map((img, i) => `
-        <article class="ck-result-card${s.selectedImageId === img.id ? ' selected' : ''}">
-          <div class="ck-result-thumb">
-            <span class="ck-result-index">${i + 1}</span>
-            ${img.mock ? '<span class="ck-result-badge">MOCK</span>' : ''}
-            ${(img.imageUrl || img.url)
-              ? `<img src="${escapeHTML(img.imageUrl || img.url)}" alt="key image ${i+1}">`
-              : `<div class="ck-mock-image"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>Mock</span></div>`}
-          </div>
-          <div class="ck-result-body">
-            <strong>${escapeHTML(img.title || 'Character Key Image')}</strong>
-            <p style="font-size:11px;color:var(--text-faint);margin:2px 0 8px">${escapeHTML(img.model || s.modelId)} · ${escapeHTML(img.aspectRatio || s.aspectRatio)}${img.mock ? ' (mock)' : ''}</p>
-            <div class="ck-result-buttons">
-              <button class="ck-rb ck-rb-primary" data-approve-key-image="${escapeHTML(img.id)}">대표 지정</button>
-              <button class="ck-rb" data-set-key-avatar="${escapeHTML(img.id)}">아바타 지정</button>
-              <button class="ck-rb" data-save-key-reference="${escapeHTML(img.id)}">참조 저장</button>
-              <button class="ck-rb" data-copy-key-url="${escapeHTML(img.id)}">URL 복사</button>
-              <button class="ck-rb" data-download-key-image="${escapeHTML(img.id)}" data-character-name="${escapeHTML(c.name || c.id)}">다운로드</button>
-            </div>
-          </div>
-        </article>`).join('')}</div>`
+      ? `<div class="ck-result-grid">${images.map((img, i) => renderCKResultCard(c, img, i)).join('')}</div>`
       : `<div class="ck-empty-results">
           <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 2L9.6 9.6 2 12l7.6 2.4L12 22l2.4-7.6L22 12l-7.6-2.4z"/></svg>
           <strong>아직 생성 결과가 없습니다</strong>
@@ -45416,6 +45445,52 @@ function bindCKStudioEvents(character) {
     const a = document.createElement('a');
     a.href = url; a.download = 'soaviz-keyimage-' + (btn.dataset.characterName || 'character') + '.png';
     document.body.appendChild(a); a.click(); a.remove();
+  }));
+
+  /* ── send-key-to-shot: Shot 레퍼런스로 보내기 ── */
+  root.querySelectorAll('[data-send-key-to-shot]').forEach(btn => btn.addEventListener('click', async () => {
+    const s = window.CharacterKeyImageStudio;
+    const img = s.generatedImages.find(x => x.id === btn.dataset.sendKeyToShot);
+    const url = img?.imageUrl || img?.url;
+    if (!url) { showToast?.('이미지 URL이 없습니다', 'warn'); return; }
+    // Shot 연결: pendingKeyImageUrl 저장 후 Shot 탭으로 이동
+    window._pendingKeyImageForShot = { url, characterId: s.characterId };
+    showToast?.('Shot 탭에서 레퍼런스로 연결하세요 ✓');
+    closeCharacterKeyImageStudio();
+    const shotLink = document.querySelector('[data-nav="shots"], [data-page="shots"], #nav-shots');
+    if (shotLink) shotLink.click();
+  }));
+
+  /* ── send-key-to-sheet: 캐릭터 시트에 추가 ── */
+  root.querySelectorAll('[data-send-key-to-sheet]').forEach(btn => btn.addEventListener('click', async () => {
+    const s = window.CharacterKeyImageStudio;
+    const img = s.generatedImages.find(x => x.id === btn.dataset.sendKeyToSheet);
+    if (!img) { showToast?.('이미지를 찾을 수 없습니다', 'warn'); return; }
+    const url = img.imageUrl || img.url || null;
+    if (!url) { showToast?.('Mock 이미지는 시트에 추가할 수 없습니다', 'warn'); return; }
+    try {
+      await SoavizDB?.ready;
+      const c = await SoavizDB.db.characters.get(s.characterId);
+      if (!c) { showToast?.('캐릭터를 찾을 수 없습니다', 'warn'); return; }
+      const sheetImages = Array.isArray(c.sheetImages) ? [...c.sheetImages] : [];
+      if (!sheetImages.includes(url)) sheetImages.push(url);
+      await SoavizDB.db.characters.update(s.characterId, { sheetImages });
+      showToast?.('캐릭터 시트에 추가됨 ✓');
+    } catch(e) { showToast?.('시트 추가 실패: ' + e.message, 'error'); }
+  }));
+
+  /* ── use-key-as-base: Variation 기준 이미지로 설정 ── */
+  root.querySelectorAll('[data-use-key-as-base]').forEach(btn => btn.addEventListener('click', async () => {
+    const s = window.CharacterKeyImageStudio;
+    const img = s.generatedImages.find(x => x.id === btn.dataset.useKeyAsBase);
+    if (!img) { showToast?.('이미지를 찾을 수 없습니다', 'warn'); return; }
+    const url = img.imageUrl || img.url || null;
+    if (!url) { showToast?.('Mock 이미지는 Variation 기준으로 사용할 수 없습니다', 'warn'); return; }
+    if (!s.referenceSlots) s.referenceSlots = {};
+    s.referenceSlots.front = { slot: 'front', dataUrl: url, mimeType: 'image/png' };
+    s.activeTab = 'references';
+    showToast?.('Variation 기준 이미지로 설정됨 ✓');
+    await renderCharacterKeyImageStudioShell(s.characterId);
   }));
 }
 
@@ -53972,7 +54047,7 @@ async function getMobileLibraryItems() {
     const tableName = detectMobileAssetTableName();
     if (tableName && db[tableName]) {
       const raw = await db[tableName].toArray().catch(() => []);
-      const ALLOWED_TYPES = new Set(['image','video','shot-prompt','prompt','character-sheet','asset','review-package']);
+      const ALLOWED_TYPES = new Set(['image','video','shot-prompt','prompt','character-sheet','asset','review-package','character-key-image']);
       raw.filter(x => !x.archived).forEach(x => {
         const type = x.type || 'asset';
         items.push({
