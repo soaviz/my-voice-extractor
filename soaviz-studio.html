@@ -54773,13 +54773,15 @@ bindComparePage();
 bindCinemaPage();
 bindVideoEditor();
 syncGuestLockedNavigation();
-// 첫 화면: Landing 표시. file://에서도 ?page=projects / #projects 딥링크 허용.
+// 첫 화면: Today 대시보드가 기본 홈. file://에서도 ?page=projects / #projects 딥링크 허용.
+// voice/transcript/audio/extract 계열 URL 파라미터는 무시하고 today로 진입.
 try {
-  const initialRoute = new URLSearchParams(location.search || '').get('page') || (location.hash || '').replace(/^#/, '');
-  if (initialRoute) showPage(initialRoute);
-  else if (typeof renderTodayPage === 'function') renderTodayPage();
+  const _rawRoute = new URLSearchParams(location.search || '').get('page') || (location.hash || '').replace(/^#/, '');
+  const _blockedAsHome = new Set(['voice', 'voices', 'transcript', 'audio', 'extract', 'studio', 'landing', '']);
+  const initialRoute = (_rawRoute && !_blockedAsHome.has(_rawRoute)) ? _rawRoute : 'today';
+  showPage(initialRoute);
 } catch (_) {
-  try { if (typeof renderTodayPage === 'function') renderTodayPage(); } catch (_) {}
+  try { showPage('today'); } catch (_) {}
 }
 $('#story-view-result')?.addEventListener('click', () => viewLastStory('story'));
 $('#random-view-result')?.addEventListener('click', () => viewLastStory('random'));
