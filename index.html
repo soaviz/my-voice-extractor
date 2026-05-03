@@ -24770,7 +24770,7 @@ function showPage(name) {
   if (name === 'today' && typeof renderTodayPage === 'function') renderTodayPage();
   if (name === 'extract' && typeof renderAudioAssetList === 'function') renderAudioAssetList();
   if (name === 'projects' && typeof renderProjectsPage === 'function') renderProjectsPage();
-  if (name === 'characters' && typeof renderCharactersPage === 'function') renderCharactersPage();
+  // renderCharactersPage: wrapper(line ~54780)에서 처리 — 여기서 중복 호출하면 race condition 발생
   if (name === 'admin' && typeof renderAdminPage === 'function') renderAdminPage();
   if (name === 'studio' && typeof refreshTtsCreditBar === 'function') refreshTtsCreditBar();
   if (name === 'video-editor') {
@@ -45660,9 +45660,26 @@ function openCharacterKeyImageStudio(id) {
   CHARACTER_PAGE_STATE.view = 'keyimage';
   CHARACTER_PAGE_STATE.activeCharacterId = id;
   CHARACTER_PAGE_STATE.returnScrollY = window.scrollY || 0;
-  // showPage가 page-characters 활성화 + renderCharactersPage() 트리거
-  if (typeof showPage === 'function') showPage('characters');
-  else renderCharactersPage();
+
+  // 1) page-characters 활성화 (showPage 경유하면 wrapper가 async 에러를 삼킴 → 직접 처리)
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const charPage = document.getElementById('page-characters');
+  if (charPage) charPage.classList.add('active');
+  window.currentPage = 'characters';
+
+  // 사이드바 nav active 동기화
+  try {
+    document.querySelectorAll('[data-page]').forEach(el => {
+      el.classList.toggle('active', el.dataset.page === 'characters');
+    });
+  } catch (_) {}
+
+  // 2) shell 직접 렌더 (에러 visible)
+  renderCharacterKeyImageStudioShell(id).catch(e => {
+    console.error('[CKStudio] shell render 실패:', e);
+    showToast?.('키이미지 스튜디오를 열 수 없습니다: ' + (e?.message || e), 'error');
+    closeCharacterKeyImageStudio();
+  });
 }
 function closeCharacterKeyImageStudio() {
   CHARACTER_PAGE_STATE.view = 'list';
@@ -47400,9 +47417,25 @@ async function renderCharacterKeyImageStudioShell(charId) {
   const grid = document.getElementById('ch-grid');
   if (!grid) return;
 
-  await SoavizDB?.ready;
-  const c = charId ? await SoavizDB.db.characters.get(charId) : null;
-  if (!c) { closeCharacterKeyImageStudio(); return; }
+  // SoavizDB guard — 초기화 전이면 잠시 대기 후 재시도
+  try {
+    if (!SoavizDB || !SoavizDB.db) {
+      await new Promise(r => setTimeout(r, 600));
+    }
+    await SoavizDB?.ready;
+  } catch (_) {}
+
+  let c = null;
+  try {
+    c = charId ? await SoavizDB.db.characters.get(charId) : null;
+  } catch (e) {
+    console.warn('[CKStudio] DB 조회 실패:', e);
+  }
+  if (!c) {
+    showToast?.('캐릭터 정보를 불러올 수 없습니다. 캐릭터를 먼저 추가해 주세요.', 'warn');
+    closeCharacterKeyImageStudio();
+    return;
+  }
 
   resetCharacterKeyImageStudioState(charId);
   const s = window.CharacterKeyImageStudio;
@@ -49351,20 +49384,29 @@ async function importCharactersJSON(file) {
 function bindCharactersPage() {
   if (!$('#page-characters')) return;
   $('#ch-add-btn')?.addEventListener('click', () => openCharacterEditor(null));
-  $('#ch-keyimage-studio-btn')?.addEventListener('click', () => {
-    const ids = [...(CHARACTER_PAGE_STATE?.selected || [])];
-    if (ids.length > 0) {
-      openCharacterKeyImageStudio(ids[0]);
-    } else {
-      // 선택된 캐릭터 없으면 첫 번째 캐릭터로 자동 진입 or 안내
-      const firstCard = document.querySelector('#ch-grid [data-ch-id]');
-      const firstId = firstCard?.dataset?.chId;
-      if (firstId) {
-        openCharacterKeyImageStudio(firstId);
-      } else {
-        showToast?.('캐릭터를 먼저 선택하거나 추가해 주세요', 'warn');
-      }
+  $('#ch-keyimage-studio-btn')?.addEventListener('click', async () => {
+    // 1순위: 체크박스 선택된 캐릭터
+    const selectedId = [...(CHARACTER_PAGE_STATE?.selected || [])][0] || null;
+    // 2순위: DOM 카드 (이미 렌더된 경우)
+    const domId = document.querySelector('#ch-grid [data-ch-id]')?.dataset?.chId || null;
+
+    let charId = selectedId || domId;
+
+    // 3순위: DOM에 없으면 DB 직접 조회 (페이지 첫 진입 or 필터 숨김 상태)
+    if (!charId) {
+      try {
+        if (!SoavizDB || !SoavizDB.db) await new Promise(r => setTimeout(r, 600));
+        await SoavizDB?.ready;
+        const chars = await SoavizDB.db.characters.orderBy('createdAt').reverse().limit(1).toArray();
+        charId = chars?.[0]?.id || null;
+      } catch (_) {}
     }
+
+    if (!charId) {
+      showToast?.('캐릭터를 먼저 추가해 주세요', 'warn');
+      return;
+    }
+    openCharacterKeyImageStudio(charId);
   });
   $('#ch-sheet-btn')?.addEventListener('click', () => openCharacterEditor(null, null, 'sheet'));
   $('#ch-project-select')?.addEventListener('change', () => renderCharactersPage());
