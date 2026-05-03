@@ -18945,6 +18945,135 @@
   }
 
   /* ════════════════════════════════════════════════════════════
+     CREDITS PAGE — 요금 안내
+     ════════════════════════════════════════════════════════════ */
+  .credits-plans-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+    margin: 28px 0;
+  }
+  .credits-plan-card {
+    background: var(--bg-1);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: relative;
+    transition: border-color .2s;
+  }
+  .credits-plan-card:hover {
+    border-color: var(--accent);
+  }
+  .credits-plan-card.featured {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent);
+  }
+  .credits-plan-tag {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 12px;
+    border-radius: 20px;
+    letter-spacing: .04em;
+  }
+  .credits-plan-header {
+    text-align: center;
+  }
+  .credits-plan-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+  }
+  .credits-plan-badge.free     { background: var(--bg-2); color: var(--text-dim); }
+  .credits-plan-badge.standard { background: #e8f4ff; color: #2979cc; }
+  .credits-plan-badge.pro      { background: linear-gradient(90deg,#7c3aed,#a855f7); color: #fff; }
+  .credits-plan-badge.team     { background: linear-gradient(90deg,#059669,#10b981); color: #fff; }
+  .credits-plan-price {
+    margin: 6px 0 4px;
+  }
+  .credits-price-amount {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .credits-price-period {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-left: 2px;
+  }
+  .credits-plan-desc {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin: 0;
+  }
+  .credits-plan-features {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex: 1;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text);
+  }
+  .credits-plan-features li.dim {
+    color: var(--text-dim);
+    opacity: .55;
+  }
+  .credits-plan-cta {
+    width: 100%;
+    padding: 10px 0;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid var(--border);
+    background: var(--bg-2);
+    color: var(--text);
+    transition: background .15s, color .15s;
+  }
+  .credits-plan-cta:hover {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .credits-plan-cta.primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .credits-plan-cta.primary:hover {
+    opacity: .88;
+  }
+  .credits-plan-cta.secondary {
+    opacity: .55;
+    cursor: default;
+    pointer-events: none;
+  }
+  .credits-notice {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 13px;
+    margin-top: 12px;
+    padding: 16px;
+    background: var(--bg-1);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+  .credits-notice p { margin: 4px 0; }
+
+  /* ════════════════════════════════════════════════════════════
      MOBILE APP SHELL — 768px 이하 전용
      데스크톱 UI는 절대 건드리지 않음
      ════════════════════════════════════════════════════════════ */
@@ -22090,7 +22219,7 @@
     </section>
 
     <!-- ================ PAGE: LANDING ================ -->
-    <section id="page-landing" class="page landing-page active">
+    <section id="page-landing" class="page landing-page">
       <section class="soaviz-landing" id="soavizLanding">
 
         <!-- ── HERO ── -->
@@ -23868,6 +23997,105 @@
       <div id="video-edit-page-root"></div>
     </section>
 
+    <!-- ================ PAGE: CREDITS (요금 안내) ================ -->
+    <section id="page-credits" class="page">
+      <div class="page-head">
+        <h1>요금 안내</h1>
+        <p>플랜을 선택하고 나만의 AI 영상 제작 스튜디오를 시작하세요.</p>
+      </div>
+
+      <div class="credits-plans-grid">
+
+        <!-- FREE -->
+        <div class="credits-plan-card">
+          <div class="credits-plan-header">
+            <span class="credits-plan-badge free">FREE</span>
+            <div class="credits-plan-price"><span class="credits-price-amount">₩0</span><span class="credits-price-period">/ 월</span></div>
+            <p class="credits-plan-desc">개인 학습 및 탐색용</p>
+          </div>
+          <ul class="credits-plan-features">
+            <li>✓ 프로젝트 3개</li>
+            <li>✓ 샷리스트 생성 (월 10회)</li>
+            <li>✓ 캐릭터 페르소나 3명</li>
+            <li>✓ 스토리지 1GB</li>
+            <li>✓ 워터마크 포함 내보내기</li>
+            <li class="dim">✗ API 키 연동</li>
+            <li class="dim">✗ 4K 내보내기</li>
+            <li class="dim">✗ 팀 공유</li>
+          </ul>
+          <button class="credits-plan-cta secondary" onclick="showPage('today')">현재 플랜</button>
+        </div>
+
+        <!-- STANDARD -->
+        <div class="credits-plan-card">
+          <div class="credits-plan-header">
+            <span class="credits-plan-badge standard">STANDARD</span>
+            <div class="credits-plan-price"><span class="credits-price-amount">₩19,900</span><span class="credits-price-period">/ 월</span></div>
+            <p class="credits-plan-desc">크리에이터 & 인디 제작자</p>
+          </div>
+          <ul class="credits-plan-features">
+            <li>✓ 프로젝트 20개</li>
+            <li>✓ 샷리스트 생성 무제한</li>
+            <li>✓ 캐릭터 페르소나 20명</li>
+            <li>✓ 스토리지 10GB</li>
+            <li>✓ 워터마크 없는 내보내기</li>
+            <li>✓ API 키 연동 (OpenAI · ElevenLabs)</li>
+            <li class="dim">✗ 4K 내보내기</li>
+            <li class="dim">✗ 팀 공유</li>
+          </ul>
+          <button class="credits-plan-cta" onclick="showToast?.('준비 중입니다. 곧 오픈됩니다!','info')">업그레이드</button>
+        </div>
+
+        <!-- PRO -->
+        <div class="credits-plan-card featured">
+          <div class="credits-plan-tag">추천</div>
+          <div class="credits-plan-header">
+            <span class="credits-plan-badge pro">PRO</span>
+            <div class="credits-plan-price"><span class="credits-price-amount">₩49,900</span><span class="credits-price-period">/ 월</span></div>
+            <p class="credits-plan-desc">전문 영상 크리에이터</p>
+          </div>
+          <ul class="credits-plan-features">
+            <li>✓ 프로젝트 30개</li>
+            <li>✓ 샷리스트 생성 무제한</li>
+            <li>✓ 캐릭터 페르소나 무제한</li>
+            <li>✓ 스토리지 50GB</li>
+            <li>✓ 워터마크 없는 내보내기</li>
+            <li>✓ API 키 연동 (전체)</li>
+            <li>✓ 4K 내보내기</li>
+            <li class="dim">✗ 팀 공유</li>
+          </ul>
+          <button class="credits-plan-cta primary" onclick="showToast?.('준비 중입니다. 곧 오픈됩니다!','info')">업그레이드</button>
+        </div>
+
+        <!-- TEAM -->
+        <div class="credits-plan-card">
+          <div class="credits-plan-header">
+            <span class="credits-plan-badge team">TEAM</span>
+            <div class="credits-plan-price"><span class="credits-price-amount">₩129,000</span><span class="credits-price-period">/ 월</span></div>
+            <p class="credits-plan-desc">스튜디오 & 팀 협업</p>
+          </div>
+          <ul class="credits-plan-features">
+            <li>✓ 프로젝트 무제한</li>
+            <li>✓ 샷리스트 생성 무제한</li>
+            <li>✓ 캐릭터 페르소나 무제한</li>
+            <li>✓ 스토리지 200GB</li>
+            <li>✓ 워터마크 없는 내보내기</li>
+            <li>✓ API 키 연동 (전체)</li>
+            <li>✓ 4K 내보내기</li>
+            <li>✓ 팀원 5명 공유</li>
+          </ul>
+          <button class="credits-plan-cta" onclick="showToast?.('준비 중입니다. 곧 오픈됩니다!','info')">문의하기</button>
+        </div>
+
+      </div>
+
+      <div class="credits-notice">
+        <p>💡 현재 베타 운영 중입니다. 유료 플랜은 곧 오픈될 예정입니다.</p>
+        <p>문의: <a href="mailto:soaviz@gmail.com" style="color:var(--accent)">soaviz@gmail.com</a></p>
+      </div>
+
+    </section>
+
 
   </main>
 </div>
@@ -24542,6 +24770,7 @@ function showPage(name) {
   if (name === 'today' && typeof renderTodayPage === 'function') renderTodayPage();
   if (name === 'extract' && typeof renderAudioAssetList === 'function') renderAudioAssetList();
   if (name === 'projects' && typeof renderProjectsPage === 'function') renderProjectsPage();
+  if (name === 'characters' && typeof renderCharactersPage === 'function') renderCharactersPage();
   if (name === 'admin' && typeof renderAdminPage === 'function') renderAdminPage();
   if (name === 'studio' && typeof refreshTtsCreditBar === 'function') refreshTtsCreditBar();
   if (name === 'video-editor') {
@@ -45431,7 +45660,9 @@ function openCharacterKeyImageStudio(id) {
   CHARACTER_PAGE_STATE.view = 'keyimage';
   CHARACTER_PAGE_STATE.activeCharacterId = id;
   CHARACTER_PAGE_STATE.returnScrollY = window.scrollY || 0;
-  renderCharactersPage();
+  // showPage가 page-characters 활성화 + renderCharactersPage() 트리거
+  if (typeof showPage === 'function') showPage('characters');
+  else renderCharactersPage();
 }
 function closeCharacterKeyImageStudio() {
   CHARACTER_PAGE_STATE.view = 'list';
@@ -47163,7 +47394,7 @@ async function renderCharacterKeyImageStudioShell(charId) {
   document.getElementById('ch-metrics')?.setAttribute('style', 'display:none');
   document.getElementById('ch-stats')?.setAttribute('style', 'display:none');
   document.getElementById('ch-bulkbar')?.setAttribute('style', 'display:none');
-  document.querySelector('#page-characters .ch-workbench')?.setAttribute('style', 'display:none');
+  // .ch-workbench 전체를 숨기면 #ch-grid(shell 삽입 대상)도 숨겨짐 → 제거
   document.querySelector('#page-characters .page-head')?.setAttribute('style', 'display:none');
 
   const grid = document.getElementById('ch-grid');
@@ -48225,7 +48456,31 @@ async function openCharacterEditor(id, preset = null, defaultTab = null) {
 
   // ── 탭 전환
   root.querySelectorAll('.cf-tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
+      // 키이미지 만들기 탭: 기존 캐릭터면 바로 스튜디오로 이동
+      if (btn.dataset.tab === 'keyimage') {
+        const saveBtn = root.querySelector('#cf-save');
+        let targetId = c.id;
+        if (!targetId) {
+          // 신규 캐릭터 — 저장 먼저
+          if (saveBtn) saveBtn.click();
+          await new Promise(r => setTimeout(r, 400));
+          const all = await SoavizDB?.db?.characters?.orderBy('createdAt').reverse().limit(1).toArray().catch(() => []);
+          targetId = all?.[0]?.id || null;
+        } else {
+          // 기존 캐릭터 — 변경사항 저장
+          if (saveBtn) saveBtn.click();
+          await new Promise(r => setTimeout(r, 200));
+        }
+        root.remove();
+        document.body.style.overflow = '';
+        if (targetId) {
+          openCharacterKeyImageStudio(targetId);
+        } else {
+          showToast?.('캐릭터를 먼저 저장해 주세요', 'warn');
+        }
+        return;
+      }
       root.querySelectorAll('.cf-tab-btn').forEach(b => b.classList.remove('active'));
       root.querySelectorAll('.cf-tab-pane').forEach(p => p.classList.remove('active'));
       btn.classList.add('active');
@@ -49098,7 +49353,18 @@ function bindCharactersPage() {
   $('#ch-add-btn')?.addEventListener('click', () => openCharacterEditor(null));
   $('#ch-keyimage-studio-btn')?.addEventListener('click', () => {
     const ids = [...(CHARACTER_PAGE_STATE?.selected || [])];
-    openCharacterKeyImageStudio(ids.length > 0 ? ids[0] : null);
+    if (ids.length > 0) {
+      openCharacterKeyImageStudio(ids[0]);
+    } else {
+      // 선택된 캐릭터 없으면 첫 번째 캐릭터로 자동 진입 or 안내
+      const firstCard = document.querySelector('#ch-grid [data-ch-id]');
+      const firstId = firstCard?.dataset?.chId;
+      if (firstId) {
+        openCharacterKeyImageStudio(firstId);
+      } else {
+        showToast?.('캐릭터를 먼저 선택하거나 추가해 주세요', 'warn');
+      }
+    }
   });
   $('#ch-sheet-btn')?.addEventListener('click', () => openCharacterEditor(null, null, 'sheet'));
   $('#ch-project-select')?.addEventListener('change', () => renderCharactersPage());
@@ -54773,13 +55039,15 @@ bindComparePage();
 bindCinemaPage();
 bindVideoEditor();
 syncGuestLockedNavigation();
-// 첫 화면: Landing 표시. file://에서도 ?page=projects / #projects 딥링크 허용.
+// 첫 화면: Today 대시보드가 기본 홈. file://에서도 ?page=projects / #projects 딥링크 허용.
+// voice/transcript/audio/extract 계열 URL 파라미터는 무시하고 today로 진입.
 try {
-  const initialRoute = new URLSearchParams(location.search || '').get('page') || (location.hash || '').replace(/^#/, '');
-  if (initialRoute) showPage(initialRoute);
-  else if (typeof renderTodayPage === 'function') renderTodayPage();
+  const _rawRoute = new URLSearchParams(location.search || '').get('page') || (location.hash || '').replace(/^#/, '');
+  const _blockedAsHome = new Set(['voice', 'voices', 'transcript', 'audio', 'extract', 'studio', 'landing', '']);
+  const initialRoute = (_rawRoute && !_blockedAsHome.has(_rawRoute)) ? _rawRoute : 'today';
+  showPage(initialRoute);
 } catch (_) {
-  try { if (typeof renderTodayPage === 'function') renderTodayPage(); } catch (_) {}
+  try { showPage('today'); } catch (_) {}
 }
 $('#story-view-result')?.addEventListener('click', () => viewLastStory('story'));
 $('#random-view-result')?.addEventListener('click', () => viewLastStory('random'));
@@ -54971,16 +55239,9 @@ setInterval(checkR2Health, 30000);
   window.openDocsModal = openDocs;
   window.closeDocsModal = closeDocs;
 
-  // Pro 업그레이드 버튼 → 결제 페이지로 이동
-  // SOAVIZ_CHECKOUT_URL 환경 변수 또는 __SOAVIZ_CONFIG__.checkoutUrl 로 교체 가능
+  // Pro 업그레이드 버튼 → 요금 안내 페이지 (page-credits)
   document.getElementById('top-pro-btn')?.addEventListener('click', () => {
-    const checkoutUrl = window.__SOAVIZ_CONFIG__?.checkoutUrl || null;
-    if (checkoutUrl) {
-      window.open(checkoutUrl, '_blank', 'noopener,noreferrer');
-    } else {
-      // checkoutUrl 미설정 시 요금제 페이지 fallback
-      openDocs('pricing-page');
-    }
+    showPage('credits');
   });
 })();
 
