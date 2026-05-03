@@ -13927,6 +13927,288 @@
       color: white;
       transform: translateY(-1px);
     }
+    /* ── 키이미지 버튼 (카드 1행) ── */
+    .ch-card-btn.keyimage-btn {
+      background: rgba(96,165,250,0.12);
+      color: #60a5fa;
+      border-color: rgba(96,165,250,0.28);
+    }
+    .ch-card-btn.keyimage-btn:hover {
+      background: rgba(96,165,250,0.22);
+      transform: translateY(-1px);
+    }
+    /* ════════════════════════════════════════════════
+       Character Key Image Studio — Shell
+       ════════════════════════════════════════════════ */
+    .ck-grid-host {
+      display: block;
+      width: 100%;
+    }
+    .ck-studio {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      min-height: 70vh;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      background: var(--bg-card);
+    }
+    /* Header */
+    .ck-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      background: rgba(255,255,255,0.025);
+      border-bottom: 1px solid var(--border);
+      min-height: 60px;
+    }
+    .ck-back-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 12px;
+      border-radius: var(--r-pill);
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 120ms, color 120ms;
+    }
+    .ck-back-btn:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+    .ck-header-center { flex: 1; min-width: 0; }
+    .ck-header-label {
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+    .ck-header-name {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text);
+      margin: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .ck-header-actions { display: flex; gap: 8px; }
+    .ck-action-btn {
+      padding: 7px 14px;
+      border-radius: var(--r-pill);
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 120ms, color 120ms, border-color 120ms;
+      white-space: nowrap;
+    }
+    .ck-action-btn:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+    /* Body */
+    .ck-body {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+    }
+    /* Sidebar */
+    .ck-sidebar {
+      width: 200px;
+      min-width: 180px;
+      max-width: 220px;
+      padding: 24px 16px;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: rgba(255,255,255,0.015);
+    }
+    .ck-sidebar-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 16px;
+      border: 2px solid rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      font-weight: 800;
+      color: white;
+      margin: 0 auto 4px;
+      flex-shrink: 0;
+    }
+    .ck-sidebar-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      text-align: center;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .ck-sidebar-role {
+      font-size: 11px;
+      color: var(--text-faint);
+      text-align: center;
+      line-height: 1.4;
+    }
+    .ck-sidebar-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: var(--r-pill);
+      font-size: 10px;
+      font-weight: 600;
+      background: rgba(167,139,250,0.12);
+      color: var(--accent);
+      border: 1px solid rgba(167,139,250,0.25);
+      align-self: center;
+    }
+    .ck-sidebar-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 4px 0;
+    }
+    .ck-sidebar-status { display: flex; flex-direction: column; gap: 6px; }
+    .ck-status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .ck-status-pill {
+      padding: 1px 7px;
+      border-radius: var(--r-pill);
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .ck-status-pill.ok    { background: rgba(110,231,183,0.14); color: #6ee7b7; border: 1px solid rgba(110,231,183,0.25); }
+    .ck-status-pill.warn  { background: rgba(251,191,36,0.12);  color: #fbbf24; border: 1px solid rgba(251,191,36,0.25); }
+    .ck-status-pill.muted { background: rgba(255,255,255,0.05); color: var(--text-faint); border: 1px solid rgba(255,255,255,0.08); }
+    .ck-sidebar-fragment {
+      font-size: 11px;
+      color: var(--text-faint);
+      line-height: 1.5;
+      font-style: italic;
+    }
+    /* Main */
+    .ck-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .ck-tabs {
+      display: flex;
+      gap: 2px;
+      padding: 12px 16px 0;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.015);
+    }
+    .ck-tab {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border: none;
+      border-bottom: 2px solid transparent;
+      border-radius: 0;
+      background: transparent;
+      color: var(--text-faint);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: color 120ms, border-color 120ms;
+      white-space: nowrap;
+      margin-bottom: -1px;
+    }
+    .ck-tab:hover { color: var(--text-dim); }
+    .ck-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .ck-tab-content {
+      flex: 1;
+      padding: 28px 24px;
+      overflow-y: auto;
+    }
+    /* Placeholder */
+    .ck-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 12px;
+      padding: 48px 24px;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    .ck-placeholder-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      background: rgba(167,139,250,0.1);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .ck-placeholder strong {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .ck-placeholder p {
+      font-size: 13px;
+      color: var(--text-faint);
+      line-height: 1.6;
+      margin: 0;
+    }
+    /* Settings */
+    .ck-settings-grid { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 320px; }
+    .ck-settings-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .ck-settings-row label { font-size: 12px; color: var(--text-dim); white-space: nowrap; }
+    .ck-select {
+      padding: 5px 10px;
+      border-radius: 8px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text-faint);
+      font-size: 12px;
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .ck-range { width: 120px; opacity: 0.4; cursor: not-allowed; }
+    /* Generate button */
+    .ck-generate-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: var(--r-pill);
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      border: none;
+      color: white;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: not-allowed;
+      opacity: 0.5;
+      margin-top: 8px;
+    }
+    /* Responsive */
+    @media (max-width: 720px) {
+      .ck-body { flex-direction: column; }
+      .ck-sidebar { width: 100%; max-width: 100%; border-right: none; border-bottom: 1px solid var(--border); flex-direction: row; flex-wrap: wrap; align-items: center; padding: 16px; }
+      .ck-sidebar-avatar { width: 52px; height: 52px; font-size: 18px; margin: 0; }
+      .ck-sidebar-name, .ck-sidebar-role { text-align: left; }
+      .ck-tabs { overflow-x: auto; }
+      .ck-tab { padding: 7px 10px; font-size: 11px; }
+    }
     .ch-empty {
       grid-column: 1 / -1;
       padding: 64px 20px;
@@ -43950,8 +44232,34 @@ function bindPipelinePage() {
   };
 })();
 
-const CHARACTER_PAGE_STATE = { search: '', role: 'all', ready: 'all', selected: new Set() };
+const CHARACTER_PAGE_STATE = { search: '', role: 'all', ready: 'all', selected: new Set(), view: 'list', activeCharacterId: null, returnScrollY: 0 };
 const CHARACTER_PENDING_DRAFT_KEY = 'soaviz.pending.characterDraft.v1';
+
+/* ── 캐릭터 비주얼 레퍼런스 헬퍼 ── */
+function hasCharacterVisualReference(c = {}) {
+  if (!c) return false;
+  if (Array.isArray(c.photos) && c.photos.some(p => p?.dataUrl)) return true;
+  if (c.referenceImageUrl) return true;
+  return false;
+}
+function getCharacterAvatarUrl(c = {}) {
+  if (!c) return null;
+  if (Array.isArray(c.photos) && c.photos[0]?.dataUrl) return c.photos[0].dataUrl;
+  if (c.referenceImageUrl) return c.referenceImageUrl;
+  return null;
+}
+function openCharacterKeyImageStudio(id) {
+  CHARACTER_PAGE_STATE.view = 'keyimage';
+  CHARACTER_PAGE_STATE.activeCharacterId = id;
+  CHARACTER_PAGE_STATE.returnScrollY = window.scrollY || 0;
+  renderCharactersPage();
+}
+function closeCharacterKeyImageStudio() {
+  CHARACTER_PAGE_STATE.view = 'list';
+  CHARACTER_PAGE_STATE.activeCharacterId = null;
+  renderCharactersPage();
+  requestAnimationFrame(() => { window.scrollTo(0, CHARACTER_PAGE_STATE.returnScrollY || 0); });
+}
 
 function getCharacterReadiness(c = {}) {
   const checks = [
@@ -43959,7 +44267,7 @@ function getCharacterReadiness(c = {}) {
     { key: 'appearance', ok: Boolean(String(c.appearance || '').trim()), label: '외형' },
     { key: 'personality', ok: Boolean(String(c.personality || '').trim()), label: '성격/톤' },
     { key: 'fragment', ok: Boolean(String(c.promptFragment || '').trim()), label: '프롬프트 Fragment' },
-    { key: 'photo', ok: Array.isArray(c.photos) && c.photos.some(p => p?.dataUrl), label: '사진' },
+    { key: 'photo', ok: hasCharacterVisualReference(c), label: '사진' },
     { key: 'voice', ok: Boolean(String(c.voiceId || '').trim()), label: '보이스' },
   ];
   const done = checks.filter(x => x.ok).length;
@@ -44032,7 +44340,18 @@ async function getFilteredCharactersForPage() {
 }
 
 async function renderCharactersPage() {
+  if (CHARACTER_PAGE_STATE.view === 'keyimage') {
+    return renderCharacterKeyImageStudioShell(CHARACTER_PAGE_STATE.activeCharacterId);
+  }
   if (typeof SoavizCharacters === 'undefined') return;
+  // 스튜디오 쉘 숨기기 (list 뷰로 복귀 시)
+  const existingShell = document.getElementById('ch-keyimage-shell');
+  if (existingShell) existingShell.remove();
+  document.getElementById('ch-metrics')?.removeAttribute('style');
+  document.getElementById('ch-stats')?.removeAttribute('style');
+  document.getElementById('ch-bulkbar')?.removeAttribute('style');
+  document.querySelector('#page-characters .ch-workbench')?.removeAttribute('style');
+  document.querySelector('#page-characters .page-head')?.removeAttribute('style');
   await SoavizDB?.ready;
 
   // 프로젝트 선택 옵션 채우기
@@ -44192,6 +44511,10 @@ async function renderCharactersPage() {
               <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               편집
             </button>
+            <button class="ch-card-btn keyimage-btn" data-ch-action="keyimage" data-ch-id="${escapeHTML(c.id)}" title="키이미지 스튜디오">
+              <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/><path d="M16 5l2 2"/></svg>
+              키이미지
+            </button>
             <button class="ch-card-btn" data-ch-action="copy" data-ch-id="${escapeHTML(c.id)}">
               <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
               프롬프트 복사
@@ -44219,6 +44542,161 @@ async function renderCharactersPage() {
     if (e.target.closest('[data-ch-action]')) return;
     openCharacterEditor(el.dataset.chId);
   }));
+}
+
+/* ════════════════════════════════════════════════════════════
+   Character Key Image Studio — 1단계 Shell
+   ════════════════════════════════════════════════════════════ */
+const CK_STUDIO_STATE = { tab: 'photos' };
+
+async function renderCharacterKeyImageStudioShell(charId) {
+  // 기존 캐릭터 목록 UI 숨기기
+  document.getElementById('ch-metrics')?.setAttribute('style', 'display:none');
+  document.getElementById('ch-stats')?.setAttribute('style', 'display:none');
+  document.getElementById('ch-bulkbar')?.setAttribute('style', 'display:none');
+  document.querySelector('#page-characters .ch-workbench')?.setAttribute('style', 'display:none');
+  document.querySelector('#page-characters .page-head')?.setAttribute('style', 'display:none');
+
+  const grid = document.getElementById('ch-grid');
+  if (!grid) return;
+
+  // 캐릭터 데이터 로드
+  await SoavizDB?.ready;
+  const c = charId ? await SoavizDB.db.characters.get(charId) : null;
+  if (!c) {
+    closeCharacterKeyImageStudio();
+    return;
+  }
+
+  const r = getCharacterReadiness(c);
+  const avatarUrl = getCharacterAvatarUrl(c);
+  const seed = c.id.slice(0, 6);
+  const c1 = '#' + (parseInt(seed.slice(0,3), 36) % 0xFFFFFF).toString(16).padStart(6, '0');
+  const c2 = '#' + (parseInt(seed.slice(3,6), 36) % 0xFFFFFF).toString(16).padStart(6, '0');
+  const _gNorm = (c.gender || '').toLowerCase();
+  const _isFemale = _gNorm === '여성' || _gNorm === 'female' || _gNorm === 'f';
+  const _isMale   = _gNorm === '남성' || _gNorm === 'male'   || _gNorm === 'm';
+  const avatarBg = avatarUrl ? `background-image:url('${avatarUrl}');background-size:cover;background-position:center;color:transparent`
+    : _isFemale ? 'background:linear-gradient(135deg,#ff6eb4,#f9a8d4)'
+    : _isMale   ? 'background:linear-gradient(135deg,#5ba4f5,#93c5fd)'
+    : `background:linear-gradient(135deg,${c1},${c2})`;
+  const initials = (c.name || '?').slice(0, 2);
+
+  const TABS = [
+    { id: 'photos',   label: '참조 사진',  icon: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' },
+    { id: 'styles',   label: '참조 스타일', icon: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>' },
+    { id: 'settings', label: '생성 설정',   icon: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>' },
+    { id: 'results',  label: '결과',       icon: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2L9.6 9.6 2 12l7.6 2.4L12 22l2.4-7.6L22 12l-7.6-2.4z"/></svg>' },
+  ];
+
+  const activeTab = CK_STUDIO_STATE.tab || 'photos';
+
+  const tabContent = {
+    photos: `
+      <div class="ck-placeholder">
+        <div class="ck-placeholder-icon"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>
+        <strong>참조 사진 등록</strong>
+        <p>${avatarUrl ? `${(c.photos || []).length}장의 사진이 등록되어 있습니다. 편집에서 추가·수정할 수 있습니다.` : '캐릭터의 실제 사진이나 레퍼런스 이미지를 등록하면 일관된 얼굴로 키이미지를 생성할 수 있습니다.'}</p>
+        ${avatarUrl ? `<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px">${(c.photos||[]).slice(0,4).map(p => `<img src="${p.dataUrl}" style="width:72px;height:72px;object-fit:cover;border-radius:10px;border:1.5px solid var(--border)">`).join('')}</div>` : ''}
+        <button class="ck-action-btn" id="ck-open-editor-photos">편집에서 사진 추가</button>
+      </div>`,
+    styles: `
+      <div class="ck-placeholder">
+        <div class="ck-placeholder-icon"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>
+        <strong>참조 스타일 설정</strong>
+        <p>키이미지의 전체적인 아트 스타일, 분위기, 색감을 지정합니다. Style Bible에서 가져오거나 직접 입력할 수 있습니다.</p>
+        <button class="ck-action-btn" onclick="showPage('styles')">Style Bible 보기</button>
+      </div>`,
+    settings: `
+      <div class="ck-placeholder">
+        <div class="ck-placeholder-icon"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+        <strong>생성 설정</strong>
+        <p>이미지 비율, 수량, 모델, 네거티브 프롬프트 등 생성 파라미터를 설정합니다.</p>
+        <div class="ck-settings-grid">
+          <div class="ck-settings-row"><label>이미지 비율</label><select class="ck-select" disabled><option>1:1 정방형</option><option>4:5 세로</option><option>16:9 가로</option><option>9:16 세로형</option></select></div>
+          <div class="ck-settings-row"><label>생성 수량</label><select class="ck-select" disabled><option>1장</option><option>2장</option><option>4장</option></select></div>
+          <div class="ck-settings-row"><label>스타일 강도</label><input type="range" min="0" max="100" value="75" class="ck-range" disabled></div>
+        </div>
+        <p style="font-size:11px;color:var(--accent);margin-top:8px">⚙️ 2단계 업데이트에서 활성화됩니다</p>
+      </div>`,
+    results: `
+      <div class="ck-placeholder">
+        <div class="ck-placeholder-icon"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 2L9.6 9.6 2 12l7.6 2.4L12 22l2.4-7.6L22 12l-7.6-2.4z"/></svg></div>
+        <strong>생성 결과</strong>
+        <p>참조 사진과 스타일 설정을 완료한 뒤 키이미지를 생성하면 결과가 여기에 표시됩니다.</p>
+        <button class="ck-generate-btn" disabled>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2L9.6 9.6 2 12l7.6 2.4L12 22l2.4-7.6L22 12l-7.6-2.4z"/></svg>
+          키이미지 생성하기 (2단계 오픈)
+        </button>
+      </div>`,
+  };
+
+  // grid에 스튜디오 쉘 삽입
+  grid.className = 'ck-grid-host';
+  grid.innerHTML = `
+    <div class="ck-studio" id="ch-keyimage-shell">
+      <div class="ck-header">
+        <button class="ck-back-btn" id="ck-back-btn">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+          캐릭터 목록
+        </button>
+        <div class="ck-header-center">
+          <span class="ck-header-label">키이미지 스튜디오</span>
+          <h2 class="ck-header-name">${escapeHTML(c.name)}</h2>
+        </div>
+        <div class="ck-header-actions">
+          <button class="ck-action-btn" id="ck-open-editor">캐릭터 편집</button>
+        </div>
+      </div>
+      <div class="ck-body">
+        <aside class="ck-sidebar">
+          <div class="ck-sidebar-avatar" style="${avatarBg}">${avatarUrl ? '' : escapeHTML(initials)}</div>
+          <div class="ck-sidebar-name">${escapeHTML(c.name)}</div>
+          <div class="ck-sidebar-role">${SoavizCharacters?.ROLE_LABEL?.[c.role] || c.role || ''}${c.gender ? ' · ' + escapeHTML(c.gender) : ''}${c.age ? ' · ' + c.age + '세' : ''}</div>
+          ${c.occupation ? `<div class="ck-sidebar-tag">${escapeHTML(c.occupation)}</div>` : ''}
+          ${c.mbti ? `<div class="ck-sidebar-tag">${escapeHTML(c.mbti)}</div>` : ''}
+          <div class="ck-sidebar-divider"></div>
+          <div class="ck-sidebar-status">
+            <div class="ck-status-row">
+              <span>사진 참조</span>
+              <span class="ck-status-pill ${hasCharacterVisualReference(c) ? 'ok' : 'warn'}">${hasCharacterVisualReference(c) ? '있음' : '없음'}</span>
+            </div>
+            <div class="ck-status-row">
+              <span>보이스</span>
+              <span class="ck-status-pill ${r.hasVoice ? 'ok' : 'muted'}">${r.hasVoice ? '연결됨' : '없음'}</span>
+            </div>
+            <div class="ck-status-row">
+              <span>준비도</span>
+              <span class="ck-status-pill ${r.ready ? 'ok' : 'warn'}">${r.percent}%</span>
+            </div>
+          </div>
+          ${c.appearance ? `<div class="ck-sidebar-divider"></div><div class="ck-sidebar-fragment">${escapeHTML(c.appearance.slice(0, 120))}${c.appearance.length > 120 ? '…' : ''}</div>` : ''}
+        </aside>
+        <div class="ck-main">
+          <div class="ck-tabs">
+            ${TABS.map(t => `<button class="ck-tab${t.id === activeTab ? ' active' : ''}" data-cktab="${t.id}">${t.icon} ${t.label}</button>`).join('')}
+          </div>
+          <div class="ck-tab-content" id="ck-tab-content">
+            ${tabContent[activeTab] || ''}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // 이벤트 바인딩
+  document.getElementById('ck-back-btn')?.addEventListener('click', () => {
+    grid.className = 'bible-grid';
+    closeCharacterKeyImageStudio();
+  });
+  document.getElementById('ck-open-editor')?.addEventListener('click', () => openCharacterEditor(charId));
+  document.getElementById('ck-open-editor-photos')?.addEventListener('click', () => openCharacterEditor(charId, null, 'info'));
+  document.querySelectorAll('.ck-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      CK_STUDIO_STATE.tab = btn.dataset.cktab;
+      renderCharacterKeyImageStudioShell(charId);
+    });
+  });
 }
 
 /** 새 캐릭터 한도 체크 — 한도 도달 시 업그레이드 안내 후 false 반환 */
@@ -45846,6 +46324,7 @@ function bindCharactersPage() {
     else if (action === 'relations' && id) await openCharacterRelationsModal(id);
     else if (action === 'duplicate' && id) await duplicateCharacter(id);
     else if (action === 'imagegen' && id) openCharacterEditor(id, null, 'sheet');
+    else if (action === 'keyimage' && id) openCharacterKeyImageStudio(id);
     else if (action === 'delete' && id) {
       try {
         const c = await SoavizDB.db.characters.get(id);
@@ -52222,6 +52701,10 @@ async function renderMobileCharacter() {
         </div>
       </div>
       <button class="mobile-primary-btn" id="mobile-character-sheet">캐릭터 시트 만들기</button>
+      <button class="mobile-secondary-btn" id="mobile-character-keyimage" style="margin-top:8px">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:middle;margin-right:4px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        키이미지 스튜디오
+      </button>
     </section>
     <section class="mobile-section">
       <div class="mobile-list">
@@ -52249,6 +52732,14 @@ async function renderMobileCharacter() {
 
   root.querySelector('#mobile-character-sheet')?.addEventListener('click', () => {
     openMobileCharacterSheetFlow();
+  });
+  root.querySelector('#mobile-character-keyimage')?.addEventListener('click', () => {
+    // 모바일: 데스크톱 캐릭터 페이지로 이동 후 스튜디오 진입
+    if (typeof showPage === 'function') {
+      showPage('characters');
+      const selId = MobileState.selectedCharacterId;
+      if (selId) requestAnimationFrame(() => openCharacterKeyImageStudio(selId));
+    }
   });
   // 캐릭터 선택
   root.querySelectorAll('[data-character-id]').forEach(btn => {
