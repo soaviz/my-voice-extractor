@@ -1,0 +1,54 @@
+# Build artifacts & large directories
+outputs/
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+.Python
+
+# Development & backend files
+sample/
+uploads/
+tmp/
+db/
+voice-extract/
+voice-extract-backend/
+scripts/
+supabase/
+js/
+public/
+
+# Python backend (runs on Fly.io, not Vercel)
+*.py
+requirements.txt
+Dockerfile
+fly.toml
+nixpacks.toml
+railway.json
+start.sh
+install-autostart.sh
+uninstall-autostart.sh
+deploy-and-verify.sh
+
+# Dev docs & specs
+*.md
+*.pdf
+*.gslides
+*.code-workspace
+SPEC_v3_architecture.html
+deployment-roadmap.html
+soaviz-pitch-script.html
+soaviz-worksheet.html
+venux-voice-studio.jsx
+persona-onboarding-flow.md
+product-flow.md
+creator-voice-stack.md
+
+# Node
+package.json
+package-lock.json
+server.js
+
+# Misc
+.DS_Store
+*.log

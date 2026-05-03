@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install Node deps
+        run: npm ci
+
+      - name: JS parse check (server.js)
+        run: node --check server.js
+
+      - name: JS parse check (extracted from HTML)
+        run: |
+          python3 -c "
+          import re
+          html = open('soaviz-studio.html').read()
+          m = re.search(r'<script>([\s\S]*?)</script>', html)
+          open('/tmp/sv.js','w').write(m.group(1))
+          "
+          node --check /tmp/sv.js
+
+      - name: Validate config files
+        run: |
+          python3 -c "import json; json.load(open('vercel.json'))"
+          test -f Dockerfile
+          test -f fly.toml
+
+  deploy-api:
+    name: Deploy API (Fly.io)
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+    steps:
+      - name: Skip deploy when token is missing
+        if: env.FLY_API_TOKEN == ''
+        run: echo "FLY_API_TOKEN secret is not configured; skipping Fly.io deploy."
+      - uses: actions/checkout@v4
+        if: env.FLY_API_TOKEN != ''
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+        if: env.FLY_API_TOKEN != ''
+      - run: flyctl deploy --remote-only
+        if: env.FLY_API_TOKEN != ''
+
+  deploy-web:
+    name: Deploy Web (Vercel)
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+    steps:
+      - name: Skip deploy when token is missing
+        if: env.VERCEL_TOKEN == ''
+        run: echo "VERCEL_TOKEN secret is not configured; skipping Vercel deploy."
+      - uses: actions/checkout@v4
+        if: env.VERCEL_TOKEN != ''
+      - uses: actions/setup-node@v4
+        if: env.VERCEL_TOKEN != ''
+        with:
+          node-version: "20"
+      - name: Install Vercel CLI
+        if: env.VERCEL_TOKEN != ''
+        run: npm i -g vercel@latest
+      - name: Pull Vercel env
+        if: env.VERCEL_TOKEN != ''
+        run: vercel pull --yes --environment=production --token=$VERCEL_TOKEN
+      - name: Deploy to Vercel
+        if: env.VERCEL_TOKEN != ''
+        run: vercel deploy --prod --token=$VERCEL_TOKEN

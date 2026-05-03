@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>SOAVIZ Studio · Deployment Roadmap</title>
+<meta name="description" content="SOAVIZ Studio current deployment status, blockers, and launch checklist." />
+<style>
+  :root {
+    --bg: #08080c;
+    --bg-soft: #0e0e15;
+    --bg-card: rgba(255,255,255,0.055);
+    --bg-card-strong: rgba(255,255,255,0.085);
+    --border: rgba(255,255,255,0.10);
+    --border-strong: rgba(255,255,255,0.16);
+    --text: #f5f3ff;
+    --muted: rgba(255,255,255,0.68);
+    --faint: rgba(255,255,255,0.46);
+    --accent: #a78bfa;
+    --accent-2: #818cf8;
+    --green: #34d399;
+    --yellow: #fbbf24;
+    --red: #f87171;
+    --cyan: #22d3ee;
+    --radius: 22px;
+    --shadow: 0 24px 80px rgba(0,0,0,0.34);
+    --font: Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    --mono: "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    min-height: 100%;
+    overflow-x: hidden;
+    background:
+      radial-gradient(circle at 18% 0%, rgba(167,139,250,0.24), transparent 34%),
+      radial-gradient(circle at 82% 8%, rgba(34,211,238,0.10), transparent 28%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    line-height: 1.62;
+  }
+
+  body { padding: 0; }
+  a { color: var(--accent); text-decoration: none; }
+  code {
+    font-family: var(--mono);
+    font-size: 0.92em;
+    color: #ddd6fe;
+    background: rgba(167,139,250,0.12);
+    border: 1px solid rgba(167,139,250,0.18);
+    border-radius: 8px;
+    padding: 2px 6px;
+  }
+
+  .shell {
+    width: min(1180px, calc(100% - 40px));
+    margin: 0 auto;
+    padding: 48px 0 80px;
+  }
+
+  .hero {
+    padding: 34px;
+    border: 1px solid var(--border);
+    border-radius: 30px;
+    background:
+      linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0.035));
+    box-shadow: var(--shadow);
+  }
+
+  .kicker {
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    margin: 12px 0 12px;
+    max-width: 860px;
+    font-size: clamp(34px, 6vw, 72px);
+    line-height: 1.02;
+    letter-spacing: -0.055em;
+  }
+
+  .hero p {
+    max-width: 780px;
+    margin: 0;
+    color: var(--muted);
+    font-size: clamp(15px, 1.7vw, 18px);
+  }
+
+  .hero-meta {
+    margin-top: 24px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.075);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .pill.done { color: #bbf7d0; border-color: rgba(52,211,153,0.34); background: rgba(52,211,153,0.10); }
+  .pill.pending { color: #fde68a; border-color: rgba(251,191,36,0.34); background: rgba(251,191,36,0.10); }
+  .pill.blocker { color: #fecaca; border-color: rgba(248,113,113,0.34); background: rgba(248,113,113,0.10); }
+
+  .summary-grid {
+    margin-top: 18px;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .metric {
+    padding: 18px;
+    border-radius: 18px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+  }
+
+  .metric strong {
+    display: block;
+    font-size: 22px;
+    line-height: 1;
+  }
+
+  .metric span {
+    display: block;
+    margin-top: 8px;
+    color: var(--faint);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  main {
+    margin-top: 24px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  section {
+    padding: 24px;
+    border-radius: var(--radius);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+  }
+
+  section.priority {
+    background:
+      linear-gradient(135deg, rgba(167,139,250,0.13), rgba(255,255,255,0.045));
+    border-color: rgba(167,139,250,0.25);
+  }
+
+  .section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: clamp(20px, 2.2vw, 28px);
+    letter-spacing: -0.035em;
+  }
+
+  .section-note {
+    margin: 4px 0 0;
+    color: var(--faint);
+    font-size: 13px;
+  }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .card {
+    padding: 16px;
+    border-radius: 16px;
+    background: rgba(0,0,0,0.16);
+    border: 1px solid var(--border);
+    min-width: 0;
+  }
+
+  .card h3 {
+    margin: 0 0 8px;
+    font-size: 15px;
+  }
+
+  .card p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .checklist {
+    display: grid;
+    gap: 9px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .checklist li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 10px;
+    align-items: start;
+    padding: 11px 12px;
+    border-radius: 14px;
+    background: rgba(0,0,0,0.15);
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  .mark {
+    width: 22px;
+    height: 22px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: 900;
+    line-height: 1;
+  }
+
+  .mark.done { color: #052e1c; background: var(--green); }
+  .mark.pending { color: #3b2600; background: var(--yellow); }
+  .mark.blocker { color: #3b0606; background: var(--red); }
+
+  .status-label {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 6px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .status-label.done { color: #bbf7d0; background: rgba(52,211,153,0.14); }
+  .status-label.pending { color: #fde68a; background: rgba(251,191,36,0.15); }
+  .status-label.blocker { color: #fecaca; background: rgba(248,113,113,0.15); }
+
+  .endpoint-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .endpoint {
+    padding: 12px;
+    border-radius: 14px;
+    background: rgba(0,0,0,0.18);
+    border: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: #ddd6fe;
+    overflow-wrap: anywhere;
+  }
+
+  .endpoint.missing {
+    color: #fecaca;
+    border-color: rgba(248,113,113,0.24);
+    background: rgba(248,113,113,0.07);
+  }
+
+  .action-list {
+    display: grid;
+    gap: 12px;
+    counter-reset: action;
+  }
+
+  .action {
+    position: relative;
+    padding: 16px 16px 16px 56px;
+    border-radius: 18px;
+    background: rgba(0,0,0,0.17);
+    border: 1px solid var(--border);
+  }
+
+  .action::before {
+    counter-increment: action;
+    content: counter(action);
+    position: absolute;
+    left: 16px;
+    top: 16px;
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    color: white;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    font-weight: 900;
+  }
+
+  .action strong { display: block; margin-bottom: 4px; }
+  .action span { color: var(--muted); font-size: 13px; }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .warning {
+    padding: 16px;
+    border-radius: 18px;
+    border: 1px solid rgba(248,113,113,0.28);
+    background: rgba(248,113,113,0.08);
+  }
+
+  .warning strong { color: #fecaca; }
+  .warning p { margin: 8px 0 0; color: var(--muted); }
+
+  .command {
+    margin-top: 10px;
+    padding: 14px;
+    border-radius: 14px;
+    background: #050507;
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #e9d5ff;
+    font-family: var(--mono);
+    font-size: 12px;
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  footer {
+    margin-top: 28px;
+    color: var(--faint);
+    text-align: center;
+    font-size: 12px;
+  }
+
+  @media (max-width: 900px) {
+    .summary-grid,
+    .cards,
+    .endpoint-grid,
+    .two-col {
+      grid-template-columns: 1fr;
+    }
+
+    .section-head {
+      display: block;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .shell {
+      width: min(100% - 24px, 1180px);
+      padding: 24px 0 56px;
+    }
+
+    .hero,
+    section {
+      padding: 18px;
+      border-radius: 20px;
+    }
+
+    .hero-meta {
+      gap: 8px;
+    }
+
+    .pill {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .metric,
+    .card,
+    .checklist li,
+    .action,
+    .warning {
+      border-radius: 14px;
+    }
+
+    .action {
+      padding-left: 50px;
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="shell">
+    <header class="hero">
+      <div class="kicker">SOAVIZ Studio Deployment Roadmap</div>
+      <h1>현재 배포 상태와 다음 출시 단계</h1>
+      <p>
+        이 문서는 2026-05-01 기준 로컬 영상 편집 검증, Railway FastAPI 백엔드 상태,
+        그리고 B안(Node/Express server.js 재배포) 기준 배포 준비 작업을 정리합니다.
+      </p>
+      <div class="hero-meta">
+        <span class="pill done">✓ Local editor verified</span>
+        <span class="pill done">✓ Mobile UX verified</span>
+        <span class="pill done">✓ Plan B selected</span>
+        <span class="pill pending">Pending: Vercel + soaviz.com</span>
+      </div>
+      <div class="summary-grid" aria-label="deployment summary">
+        <div class="metric"><strong>4</strong><span>tested breakpoints</span></div>
+        <div class="metric"><strong>OK</strong><span>local FFmpeg render</span></div>
+        <div class="metric"><strong>OK</strong><span>Railway health</span></div>
+        <div class="metric"><strong>B</strong><span>Node backend strategy</span></div>
+      </div>
+    </header>
+
+    <main>
+      <section id="current-status" class="priority">
+        <div class="section-head">
+          <div>
+            <h2>Current Status</h2>
+            <p class="section-note">로컬 제품 흐름은 검증 완료. 프로덕션은 Node/Express server.js 백엔드 재배포 기준으로 진행합니다.</p>
+          </div>
+          <span class="pill pending">Production not final yet</span>
+        </div>
+        <div class="cards">
+          <article class="card">
+            <h3>로컬 앱 상태 <span class="status-label done">Done</span></h3>
+            <p><code>http://localhost:8787/soaviz-studio.html</code> 기준 업로드, 분석, 버전 선택, FFmpeg 렌더링, 다운로드 흐름이 정상 동작합니다.</p>
+          </article>
+          <article class="card">
+            <h3>배포 상태 <span class="status-label pending">Pending</span></h3>
+            <p>기존 Railway extractor API는 사용하지 않습니다. 로컬에서 검증된 Node <code>server.js</code>를 새 Railway 서비스로 배포합니다.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="completed">
+        <div class="section-head">
+          <div>
+            <h2>Completed</h2>
+            <p class="section-note">현재까지 완료로 볼 수 있는 항목입니다.</p>
+          </div>
+          <span class="pill done">Verified</span>
+        </div>
+        <ul class="checklist">
+          <li><span class="mark done">✓</span><span>Local video editor works</span></li>
+          <li><span class="mark done">✓</span><span>Mobile responsive UX works</span></li>
+          <li><span class="mark done">✓</span><span>Upload → analyze → select → render → download works locally</span></li>
+          <li><span class="mark done">✓</span><span>FFmpeg render works locally</span></li>
+          <li><span class="mark done">✓</span><span>Railway backend is deployed and alive</span></li>
+          <li><span class="mark done">✓</span><span>GitHub CLI auth completed</span></li>
+          <li><span class="mark done">✓</span><span>GitHub push flow works</span></li>
+          <li><span class="mark done">✓</span><span><code>deployment-roadmap.html</code> already pushed previously</span></li>
+        </ul>
+      </section>
+
+      <section id="verified-mobile-ux">
+        <div class="section-head">
+          <div>
+            <h2>Verified Mobile UX</h2>
+            <p class="section-note">실제 모바일 뷰포트 기준으로 UI와 핵심 편집 흐름을 검증했습니다.</p>
+          </div>
+          <span class="pill done">Pass</span>
+        </div>
+        <div class="cards">
+          <article class="card">
+            <h3>Tested breakpoints</h3>
+            <p>390px iPhone, 430px large phone, 768px tablet, 1440px desktop.</p>
+          </article>
+          <article class="card">
+            <h3>UX result</h3>
+            <p>가로 스크롤 없음, 하단 고정 CTA 정상, 설정 bottom sheet 정상, A/B/C 카드 선택 정상.</p>
+          </article>
+          <article class="card">
+            <h3>Bug fixed</h3>
+            <p>모바일에서 렌더링 완료 후 다운로드 버튼이 숨겨지던 문제를 수정했습니다.</p>
+          </article>
+          <article class="card">
+            <h3>Validated flow</h3>
+            <p>업로드 → 분석 → A/B/C 선택 → 렌더링 → 결과 다운로드까지 로컬 환경에서 완료 확인.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="local-backend-test">
+        <div class="section-head">
+          <div>
+            <h2>Local Backend Test</h2>
+            <p class="section-note">현재 Node/Express 로컬 백엔드 기준 검증 결과입니다.</p>
+          </div>
+          <span class="pill done">Local OK</span>
+        </div>
+        <ul class="checklist">
+          <li><span class="mark done">✓</span><span><code>GET /health</code> 정상 응답</span></li>
+          <li><span class="mark done">✓</span><span><code>POST /api/analyze-video</code> 로컬 분석 흐름 정상</span></li>
+          <li><span class="mark done">✓</span><span><code>POST /api/render-video</code> 로컬 FFmpeg 렌더링 정상</span></li>
+          <li><span class="mark done">✓</span><span><code>git diff --check</code> 통과</span></li>
+          <li><span class="mark done">✓</span><span><code>node --check server.js</code> 통과</span></li>
+          <li><span class="mark done">✓</span><span>HTML inline script 문법 검사 통과</span></li>
+        </ul>
+      </section>
+
+      <section id="railway-backend-status">
+        <div class="section-head">
+          <div>
+            <h2>Railway Backend Status</h2>
+            <p class="section-note">Railway 서버는 살아 있지만 기존 Node API가 아니라 extractor API 구조입니다.</p>
+          </div>
+          <span class="pill done">Alive</span>
+        </div>
+        <div class="two-col">
+          <div class="card">
+            <h3>Current Railway server</h3>
+            <p>Name: <strong>soaviz studio — extractor API</strong><br />Status: <strong style="color:var(--green)">ok</strong></p>
+          </div>
+          <div class="card">
+            <h3>Meaning</h3>
+            <p>서버 생존과 docs endpoint 확인은 완료했습니다. 단, 프론트가 기대하는 <code>analyze-video</code>/<code>render-video</code>와는 경로/흐름이 다릅니다.</p>
+          </div>
+        </div>
+        <h3 style="margin:18px 0 10px">Endpoint examples</h3>
+        <div class="endpoint-grid">
+          <div class="endpoint">GET /api/health</div>
+          <div class="endpoint">POST /api/video/upload</div>
+          <div class="endpoint">POST /api/video/generate</div>
+          <div class="endpoint">GET /api/video/status/{prediction_id}</div>
+          <div class="endpoint">GET /api/job/{jid}</div>
+          <div class="endpoint">GET /api/job/{jid}/download</div>
+          <div class="endpoint missing">Missing: POST /api/analyze-video</div>
+          <div class="endpoint missing">Missing: POST /api/render-video</div>
+        </div>
+      </section>
+
+      <section id="api-compatibility-issue" class="priority">
+        <div class="section-head">
+          <div>
+            <h2>API Compatibility Issue</h2>
+            <p class="section-note">프로덕션 전환 전 반드시 결정해야 하는 핵심 분기입니다.</p>
+          </div>
+          <span class="pill blocker">Blocker</span>
+        </div>
+        <div class="warning">
+          <strong>현재 불일치</strong>
+          <p>
+            프론트 일부 흐름은 기존 Node <code>server.js</code> 기준인
+            <code>/api/analyze-video</code>, <code>/api/render-video</code> 구조를 기대할 수 있습니다.
+            Railway FastAPI는 <code>upload</code>, <code>generate</code>, <code>status</code>, <code>download</code>
+            기반 구조입니다. 현재 선택은 B안이므로 프론트 API adapter 작업 대신 Node backend 재배포를 진행합니다.
+          </p>
+        </div>
+        <div class="cards" style="margin-top:12px">
+          <article class="card">
+            <h3>Option A: adapt frontend to Railway FastAPI</h3>
+            <p>이번 단계에서는 진행하지 않습니다. FastAPI extractor API는 기존 Node endpoint와 직접 호환되지 않습니다.</p>
+          </article>
+          <article class="card">
+            <h3>Option B: redeploy Node server.js backend <span class="status-label done">Selected</span></h3>
+            <p>로컬에서 검증된 Node API를 Railway 또는 Render에 재배포해 프론트 변경 폭을 줄입니다.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="next-actions">
+        <div class="section-head">
+          <div>
+            <h2>Next Actions</h2>
+            <p class="section-note">우선순위 기준 다음 작업입니다.</p>
+          </div>
+          <span class="pill pending">Pending</span>
+        </div>
+        <div class="action-list">
+          <div class="action">
+            <strong>Priority 1: Prepare Node Railway backend</strong>
+            <span><code>railway.json</code>과 <code>nixpacks.toml</code>로 Node/Nixpacks 빌드를 강제하고 <code>server.js</code>를 실행합니다.</span>
+          </div>
+          <div class="action">
+            <strong>Priority 2: Set production backendUrl</strong>
+            <span><code>window.__SOAVIZ_CONFIG__.backendUrl</code>을 실제 Railway/Render 프로덕션 URL로 설정합니다.</span>
+          </div>
+          <div class="action">
+            <strong>Priority 3: Push changes</strong>
+            <span>API 연결 구조와 문서 변경을 GitHub <code>main</code>에 커밋/푸시합니다.</span>
+          </div>
+          <div class="action">
+            <strong>Priority 4: Vercel deploy</strong>
+            <span>GitHub repo를 Vercel에 연결하고 <code>soaviz.com</code> 도메인을 프로덕션으로 연결합니다.</span>
+          </div>
+          <div class="action">
+            <strong>Priority 5: Production QA on soaviz.com</strong>
+            <span>프로덕션 도메인에서 업로드, 분석, 선택, 렌더링, 다운로드 전체 흐름을 재검증합니다.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="deployment-checklist">
+        <div class="section-head">
+          <div>
+            <h2>Deployment Checklist</h2>
+            <p class="section-note">프로덕션 배포 전후 확인해야 할 항목입니다.</p>
+          </div>
+          <span class="pill pending">Checklist</span>
+        </div>
+        <ul class="checklist">
+          <li><span class="mark done">✓</span><span><strong>Done</strong> Backend strategy selected: B안, redeploy Node <code>server.js</code> backend</span></li>
+          <li><span class="mark pending">!</span><span><strong>Pending</strong> Deploy Node backend as a new Railway service</span></li>
+          <li><span class="mark pending">!</span><span><strong>Pending</strong> Replace <code>backendUrl</code> with Railway production URL</span></li>
+          <li><span class="mark pending">!</span><span><strong>Pending</strong> Verify <code>soaviz.com</code> Vercel deployment</span></li>
+          <li><span class="mark pending">!</span><span><strong>Pending</strong> Test upload/analyze/render on production domain</span></li>
+          <li><span class="mark pending">!</span><span><strong>Pending</strong> Verify new Railway Node backend exposes <code>/api/analyze-video</code> and <code>/api/render-video</code></span></li>
+        </ul>
+      </section>
+
+      <section id="risk-blockers">
+        <div class="section-head">
+          <div>
+            <h2>Risk / Blockers</h2>
+            <p class="section-note">출시를 막을 수 있는 위험 요소입니다.</p>
+          </div>
+          <span class="pill blocker">Watch</span>
+        </div>
+        <div class="cards">
+          <article class="card">
+            <h3>API mismatch</h3>
+            <p>프론트가 Node API를 호출하는 상태에서 Railway FastAPI URL을 넣으면 분석/렌더링이 실패할 수 있습니다.</p>
+          </article>
+          <article class="card">
+            <h3>FFmpeg runtime</h3>
+            <p>Node backend를 재배포하는 경우 Railway/Render 환경에 FFmpeg 실행 가능 여부를 다시 확인해야 합니다.</p>
+          </article>
+          <article class="card">
+            <h3>Production storage</h3>
+            <p>로컬 <code>uploads</code>/<code>outputs</code> 저장소는 장기 운영용이 아닙니다. R2/Supabase Storage 전환 계획이 필요합니다.</p>
+          </article>
+          <article class="card">
+            <h3>Domain QA</h3>
+            <p>로컬 모바일 테스트는 통과했지만 <code>soaviz.com</code>에서 실제 CORS, 파일 업로드, 다운로드 링크 검증이 필요합니다.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="final-launch-criteria">
+        <div class="section-head">
+          <div>
+            <h2>Final Launch Criteria</h2>
+            <p class="section-note">이 항목이 모두 통과되면 공개 런칭 기준을 만족합니다.</p>
+          </div>
+          <span class="pill pending">Launch gate</span>
+        </div>
+        <ul class="checklist">
+          <li><span class="mark pending">!</span><span><code>https://soaviz.com</code>이 Vercel 프로덕션으로 안정적으로 연결됨</span></li>
+          <li><span class="mark pending">!</span><span>프로덕션 <code>backendUrl</code>이 실제 운영 백엔드를 가리킴</span></li>
+          <li><span class="mark pending">!</span><span>프로덕션 도메인에서 업로드 → 분석 → A/B/C 선택 → 렌더링 → 다운로드 완료</span></li>
+          <li><span class="mark pending">!</span><span>390px / 430px / 768px / 1440px 프로덕션 QA 통과</span></li>
+          <li><span class="mark pending">!</span><span>CORS, 파일 크기, timeout, FFmpeg 실패 UX 확인</span></li>
+          <li><span class="mark pending">!</span><span>GitHub main push 후 Vercel/Railway 배포 로그 이상 없음</span></li>
+        </ul>
+        <div class="command"># Suggested next commands
+git diff --check
+node --check server.js
+git status -sb
+
+# After backend strategy is decided
+git add deployment-roadmap.html index.html soaviz-studio.html server.js README.md
+git commit -m "docs: update deployment roadmap"
+git push origin main</div>
+      </section>
+    </main>
+
+    <footer>
+      Last updated: 2026-05-01 · SOAVIZ Studio deployment roadmap
+    </footer>
+  </div>
+</body>
+</html>
