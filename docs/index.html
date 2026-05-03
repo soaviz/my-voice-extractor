@@ -13832,19 +13832,7 @@
       margin-right: auto;
       font-variant-numeric: tabular-nums;
     }
-    .ch-select-box {
-      position: absolute;
-      top: 14px; left: 14px;
-      width: 17px; height: 17px;
-      border-radius: 5px;
-      accent-color: var(--accent);
-      cursor: pointer;
-      z-index: 2;
-      opacity: 0;
-      transition: opacity 160ms;
-    }
-    .bible-card:hover .ch-select-box,
-    .bible-card.selected .ch-select-box { opacity: 1; }
+    .ch-select-box { display: none; }
     .bible-card.selected {
       border-color: rgba(167,139,250,0.62);
       box-shadow: 0 0 0 2px rgba(167,139,250,0.16), 0 14px 34px -14px rgba(167,139,250,0.36);
@@ -44881,7 +44869,6 @@ async function renderCharactersPage() {
     const _occupHTML = c.occupation ? `<span style="padding:2px 7px;border-radius:var(--r-pill);font-size:10px;font-weight:600;letter-spacing:0.02em;background:rgba(251,191,36,0.12);color:#f59e0b;border:1px solid rgba(251,191,36,0.3)">${escapeHTML(c.occupation)}</span>` : '';
     return `
       <article class="bible-card ${CHARACTER_PAGE_STATE.selected.has(c.id) ? 'selected' : ''}" data-ch-id="${escapeHTML(c.id)}" style="--bib-c1:${_genderC1};--bib-c2:${_genderC2}">
-        <input class="ch-select-box" type="checkbox" data-ch-action="toggle-select" data-ch-id="${escapeHTML(c.id)}" ${CHARACTER_PAGE_STATE.selected.has(c.id) ? 'checked' : ''} aria-label="캐릭터 선택" />
         <button class="ch-card-delete" data-ch-action="delete" data-ch-id="${escapeHTML(c.id)}" title="${escapeHTML(c.name)} 삭제" aria-label="삭제">
           <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
