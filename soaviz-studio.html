@@ -20361,6 +20361,619 @@
     .prod-project-title { font-size: 24px; }
     .prod-queue-row { grid-template-columns: 60px 1fr; }
   }
+
+  /* ════════════════════════════════════════════════════════════════════════
+     v4 — TOP 1% UX REFINEMENT LAYER
+     근거:
+     · 미국 상위 1% SaaS 디자인 패턴 (Linear, Vercel, Framer, Loom 레퍼런스)
+     · 8px 그리드 철저 적용 + 명확한 3단계 elevation 시스템
+     · 타이포 위계: Display(Fraunces) → Body → Mono 역할 명확화
+     · 동작 원칙: spring easing(0.34,1.4,0.64,1) + 160~220ms 표준
+     ════════════════════════════════════════════════════════════════════════ */
+
+  /* ── v4.0 토큰 확장 ────────────────────────────────────────────────── */
+  :root {
+    /* Canvas — 극단적으로 깊은 배경 */
+    --v4-canvas:       #04030E;
+    --v4-base:         #07061A;
+
+    /* Card elevation — 더 분명한 3단계 */
+    --v4-card-0:       rgba(255,255,255,0.022);
+    --v4-card-1:       rgba(255,255,255,0.038);
+    --v4-card-2:       rgba(255,255,255,0.058);
+
+    /* Border — 명확한 3티어 */
+    --v4-line-0:       rgba(255,255,255,0.048);
+    --v4-line-1:       rgba(255,255,255,0.082);
+    --v4-line-2:       rgba(255,255,255,0.140);
+    --v4-line-acc:     rgba(167,139,250,0.42);
+
+    /* Glow — 3단계 */
+    --v4-glow-xs: 0 0 0 1px rgba(167,139,250,0.28), 0 4px 14px -4px rgba(167,139,250,0.40);
+    --v4-glow-sm: 0 0 0 1px rgba(167,139,250,0.35), 0 8px 28px -8px rgba(167,139,250,0.55);
+    --v4-glow-md: 0 0 0 1px rgba(167,139,250,0.42), 0 16px 44px -10px rgba(124,108,234,0.65);
+
+    /* 버튼 높이 scale */
+    --v4-btn-xs: 28px;
+    --v4-btn-sm: 34px;
+    --v4-btn-md: 40px;
+    --v4-btn-lg: 46px;
+    --v4-btn-xl: 54px;
+
+    /* Motion — spring 통일 */
+    --v4-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+    --v4-ease:   cubic-bezier(0.22, 0.61, 0.36, 1);
+    --v4-t-xs:   100ms;
+    --v4-t-sm:   160ms;
+    --v4-t-md:   220ms;
+    --v4-t-lg:   320ms;
+  }
+
+  /* ── v4.1 바디 배경 — 더 깊고 풍부한 ambient ────────────────────── */
+  body {
+    background-color: var(--v4-canvas) !important;
+    background-image:
+      radial-gradient(ellipse 110% 60% at 10% -4%, rgba(130,100,240,0.14), transparent 50%),
+      radial-gradient(ellipse 75%  45% at 90%  2%, rgba(100,115,235,0.10), transparent 44%),
+      radial-gradient(ellipse 55%  35% at 52% 98%, rgba(150,110,255,0.06), transparent 50%),
+      radial-gradient(ellipse 35%  25% at 70% 55%, rgba(80,100,230,0.04), transparent 45%) !important;
+    background-attachment: fixed !important;
+  }
+
+  /* ── v4.2 Topbar — ultra-glass ──────────────────────────────────── */
+  .topbar {
+    background: rgba(4,3,14,0.82) !important;
+    backdrop-filter: blur(28px) saturate(210%) brightness(0.96) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(210%) brightness(0.96) !important;
+    border-bottom-color: var(--v4-line-0) !important;
+    padding-left: 14px !important;
+    padding-right: 18px !important;
+  }
+  .topbar::after {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(167,139,250,0.18) 30%,
+      rgba(196,181,253,0.55) 50%,
+      rgba(167,139,250,0.18) 70%,
+      transparent 100%
+    ) !important;
+    opacity: 0.50 !important;
+  }
+  .brand-name {
+    font-size: 17.5px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.040em !important;
+    color: var(--d-ink, #F4F4F8) !important;
+  }
+  .brand-sub {
+    font-size: 10px !important;
+    letter-spacing: 0.07em !important;
+    color: var(--d-ink-whisper, #52525E) !important;
+  }
+
+  /* ── v4.3 Sidebar — 더 정제된 아이콘 내비 ──────────────────────── */
+  .sidebar {
+    background: rgba(4,3,14,0.50) !important;
+    border-right-color: var(--v4-line-0) !important;
+    padding: 8px 5px !important;
+    gap: 1px !important;
+  }
+  .nav-item {
+    min-height: 58px !important;
+    padding: 10px 4px !important;
+    border-radius: 11px !important;
+    font-size: 9.5px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.005em !important;
+    gap: 4px !important;
+    color: var(--d-ink-faint, #797986) !important;
+  }
+  .nav-item .icon {
+    width: 21px !important;
+    height: 21px !important;
+    stroke-width: 1.55 !important;
+    transition: transform var(--v4-t-sm) var(--v4-spring) !important;
+  }
+  .nav-item:hover {
+    background: rgba(255,255,255,0.030) !important;
+    color: var(--d-ink-mute, #B5B5C2) !important;
+    transform: none !important; /* 수직 이동 제거 — 안정감 */
+  }
+  .nav-item:hover .icon {
+    transform: scale(1.10) !important;
+  }
+  /* Active — glow pill */
+  .nav-item.active {
+    background: rgba(167,139,250,0.11) !important;
+    color: var(--d-acc, #A78BFA) !important;
+    box-shadow: none !important;
+  }
+  .nav-item.active .icon {
+    color: var(--d-acc, #A78BFA) !important;
+    filter: drop-shadow(0 0 5px rgba(167,139,250,0.52)) !important;
+    transform: scale(1.04) !important;
+  }
+  /* Active — left accent bar (override ::before) */
+  .nav-item.active::before {
+    width: 3px !important;
+    height: 20px !important;
+    border-radius: 0 3px 3px 0 !important;
+    background: linear-gradient(180deg, #c4b5fd, #8b6fea) !important;
+    box-shadow: 0 0 12px rgba(167,139,250,0.65), 0 0 22px rgba(167,139,250,0.30) !important;
+  }
+  /* Nav divider */
+  .nav-divider {
+    margin: 6px 12px !important;
+    background: var(--v4-line-0) !important;
+  }
+
+  /* ── v4.4 Layout + main content ─────────────────────────────────── */
+  .layout {
+    max-width: 1440px !important;
+  }
+  .main {
+    padding: 40px 48px 96px !important;
+    max-width: 1080px !important;
+  }
+  @media (max-width: 1200px) {
+    .main { padding: 36px 40px 80px !important; max-width: 960px !important; }
+  }
+  @media (max-width: 900px) {
+    .main { padding: 28px 24px 72px !important; max-width: 100% !important; }
+  }
+  @media (max-width: 640px) {
+    .main { padding: 20px 16px 64px !important; }
+  }
+
+  /* ── v4.5 Page head — editorial ─────────────────────────────────── */
+  .page-head {
+    margin-bottom: 38px !important;
+    position: relative;
+  }
+  .page-head h1 {
+    font-size: 31px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.038em !important;
+    line-height: 1.08 !important;
+    color: var(--d-ink, #F4F4F8) !important;
+    margin-bottom: 7px !important;
+  }
+  .page-head p {
+    font-size: 13.5px !important;
+    color: var(--d-ink-mute, #B5B5C2) !important;
+    line-height: 1.62 !important;
+    max-width: 700px !important;
+    margin: 0 !important;
+  }
+  /* Accent gradient rule under heading */
+  .page-head::after {
+    content: "" !important;
+    display: block !important;
+    margin-top: 20px !important;
+    height: 1px !important;
+    background: linear-gradient(
+      90deg,
+      rgba(167,139,250,0.40) 0%,
+      rgba(167,139,250,0.12) 50%,
+      transparent 100%
+    ) !important;
+  }
+
+  /* ── v4.6 Card system — visible elevation ────────────────────────── */
+  .card {
+    background: var(--v4-card-1) !important;
+    border-color: var(--v4-line-1) !important;
+    border-radius: 14px !important;
+  }
+  .stage {
+    background: var(--v4-card-0) !important;
+    border-color: var(--v4-line-0) !important;
+    border-radius: 14px !important;
+  }
+  .stage-header {
+    padding: 15px 18px !important;
+    border-bottom-color: var(--v4-line-0) !important;
+  }
+  .stage-body { padding: 18px !important; }
+
+  /* History items */
+  .history-item {
+    background: var(--v4-card-0) !important;
+    border-color: var(--v4-line-0) !important;
+    border-radius: 12px !important;
+    transition: background var(--v4-t-sm) var(--v4-ease),
+                border-color var(--v4-t-sm) var(--v4-ease),
+                transform var(--v4-t-sm) var(--v4-spring) !important;
+  }
+  .history-item:hover {
+    background: var(--v4-card-1) !important;
+    border-color: var(--v4-line-1) !important;
+    transform: translateX(3px) !important;
+  }
+
+  /* Control cards */
+  .control-card {
+    background: var(--v4-card-0) !important;
+    border-color: var(--v4-line-0) !important;
+    border-radius: 12px !important;
+  }
+
+  /* Vault card */
+  .vault-card {
+    background: linear-gradient(145deg, rgba(167,139,250,0.055), var(--v4-card-0)) !important;
+    border-color: rgba(167,139,250,0.22) !important;
+    border-radius: 18px !important;
+  }
+
+  /* Persona card */
+  .persona-card {
+    background: var(--v4-card-0) !important;
+    border-color: var(--v4-line-0) !important;
+    border-radius: 14px !important;
+  }
+
+  /* ── v4.7 Generate 버튼 — 시그니처 CTA ───────────────────────────── */
+  .btn-generate {
+    height: var(--v4-btn-xl, 54px) !important;
+    padding: 0 30px !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.012em !important;
+    border-radius: 14px !important;
+    background: linear-gradient(
+      135deg,
+      #A78BFA 0%,
+      #7C6CEA 45%,
+      #6366F1 100%
+    ) !important;
+    background-size: 200% 100% !important;
+    background-position: 0% 50% !important;
+    border: 1px solid rgba(255,255,255,0.15) !important;
+    box-shadow:
+      0 0 0 1px rgba(99,102,241,0.32),
+      0 8px 26px -6px rgba(124,108,234,0.62),
+      inset 0 1px 0 rgba(255,255,255,0.18) !important;
+    transition:
+      background-position var(--v4-t-lg) var(--v4-ease),
+      transform var(--v4-t-sm) var(--v4-spring),
+      box-shadow var(--v4-t-md) var(--v4-ease) !important;
+    position: relative !important;
+    overflow: hidden !important;
+  }
+  .btn-generate::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    background: radial-gradient(
+      ellipse 80% 50% at 50% -5%,
+      rgba(255,255,255,0.20),
+      transparent 65%
+    ) !important;
+    pointer-events: none !important;
+  }
+  .btn-generate:hover:not(:disabled) {
+    background-position: 100% 50% !important;
+    transform: translateY(-2px) !important;
+    box-shadow:
+      0 0 0 1px rgba(167,139,250,0.48),
+      0 14px 36px -8px rgba(124,108,234,0.78),
+      inset 0 1px 0 rgba(255,255,255,0.24) !important;
+  }
+  .btn-generate:active:not(:disabled) {
+    transform: translateY(0px) scale(0.985) !important;
+  }
+  .btn-generate:disabled {
+    opacity: 0.60 !important;
+    cursor: wait !important;
+  }
+
+  /* ── v4.8 Primary 버튼 ────────────────────────────────────────── */
+  .btn-primary {
+    height: var(--v4-btn-lg, 46px) !important;
+    padding: 0 24px !important;
+    font-size: 13.5px !important;
+    font-weight: 650 !important;
+    letter-spacing: -0.010em !important;
+    border-radius: 12px !important;
+    background: linear-gradient(135deg, var(--d-acc, #A78BFA), #818CF8) !important;
+    border: 1px solid rgba(255,255,255,0.13) !important;
+    box-shadow:
+      0 6px 20px -6px rgba(139,92,246,0.52),
+      inset 0 1px 0 rgba(255,255,255,0.16) !important;
+    transition:
+      transform var(--v4-t-sm) var(--v4-spring),
+      box-shadow var(--v4-t-md) var(--v4-ease) !important;
+  }
+  .btn-primary:hover {
+    transform: translateY(-1px) !important;
+    box-shadow:
+      0 10px 28px -6px rgba(139,92,246,0.68),
+      inset 0 1px 0 rgba(255,255,255,0.20) !important;
+  }
+  .btn-primary:active {
+    transform: translateY(0) scale(0.988) !important;
+  }
+  .btn-primary:disabled { opacity: 0.50 !important; cursor: not-allowed !important; transform: none !important; }
+
+  /* ── v4.9 Ghost 버튼 ───────────────────────────────────────────── */
+  .ghost-btn, .btn-ghost {
+    height: var(--v4-btn-md, 40px) !important;
+    padding: 0 18px !important;
+    background: rgba(255,255,255,0.038) !important;
+    border: 1px solid var(--v4-line-1) !important;
+    color: var(--d-ink-mute, #B5B5C2) !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    border-radius: 10px !important;
+    transition: background var(--v4-t-xs), border-color var(--v4-t-xs), color var(--v4-t-xs) !important;
+  }
+  .ghost-btn:hover, .btn-ghost:hover {
+    background: rgba(255,255,255,0.062) !important;
+    border-color: var(--v4-line-2) !important;
+    color: var(--d-ink, #F4F4F8) !important;
+  }
+
+  /* ── v4.10 Input 통일 ──────────────────────────────────────────── */
+  input[type="text"],
+  input[type="password"],
+  input[type="email"],
+  input[type="url"],
+  input[type="number"],
+  input[type="search"],
+  .url-input,
+  .mock-input,
+  .mock-textarea,
+  textarea,
+  select {
+    background: rgba(255,255,255,0.030) !important;
+    border-color: var(--v4-line-1) !important;
+    border-radius: 10px !important;
+    color: var(--d-ink, #F4F4F8) !important;
+  }
+  input[type="text"]:focus,
+  input[type="password"]:focus,
+  input[type="email"]:focus,
+  input[type="url"]:focus,
+  input[type="number"]:focus,
+  input[type="search"]:focus,
+  .url-input:focus,
+  .mock-input:focus,
+  .mock-textarea:focus,
+  textarea:focus,
+  select:focus {
+    border-color: rgba(167,139,250,0.70) !important;
+    background: rgba(255,255,255,0.042) !important;
+    box-shadow: 0 0 0 3px rgba(167,139,250,0.12) !important;
+    outline: none !important;
+  }
+  input::placeholder, textarea::placeholder {
+    color: var(--d-ink-whisper, #52525E) !important;
+  }
+
+  /* ── v4.11 Pill/tab 활성 상태 ──────────────────────────────────── */
+  .pill.active, .ba-toggle button.active {
+    background: linear-gradient(
+      135deg,
+      rgba(167,139,250,0.18),
+      rgba(129,140,248,0.12)
+    ) !important;
+    border-color: rgba(167,139,250,0.38) !important;
+    color: var(--d-ink, #F4F4F8) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.07) !important;
+  }
+  .tag-btn:hover {
+    background: rgba(167,139,250,0.10) !important;
+    border-color: rgba(167,139,250,0.30) !important;
+  }
+  .tag-btn.selected {
+    border-color: rgba(255,255,255,0.55) !important;
+    background: rgba(255,255,255,0.08) !important;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.22) !important;
+  }
+
+  /* ── v4.12 Toast — 프리미엄 ────────────────────────────────────── */
+  .toast {
+    border-radius: 13px !important;
+    padding: 13px 20px !important;
+    font-size: 13.5px !important;
+    letter-spacing: -0.012em !important;
+    background: rgba(10,9,22,0.88) !important;
+    border: 1px solid rgba(255,255,255,0.09) !important;
+    box-shadow:
+      0 28px 72px -14px rgba(0,0,0,0.70),
+      0 0 0 1px rgba(255,255,255,0.055) !important;
+    backdrop-filter: blur(18px) saturate(200%) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(200%) !important;
+  }
+
+  /* ── v4.13 Modal 퀄리티 ────────────────────────────────────────── */
+  .vault-modal {
+    border-radius: 22px !important;
+    background: rgba(10,9,22,0.92) !important;
+    border-color: var(--v4-line-1) !important;
+    box-shadow:
+      0 40px 100px -20px rgba(0,0,0,0.75),
+      0 0 0 1px var(--v4-line-1) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+  }
+
+  /* ── v4.14 Dropzone ────────────────────────────────────────────── */
+  .dropzone {
+    border-radius: 18px !important;
+    border-width: 1.5px !important;
+    border-color: var(--v4-line-1) !important;
+  }
+  .dropzone:hover, .dropzone.dragging {
+    border-color: var(--d-acc, #A78BFA) !important;
+    box-shadow: 0 0 0 1px rgba(167,139,250,0.18) inset !important;
+  }
+
+  /* ── v4.15 Scrollbar — 6px 미니멀 ─────────────────────────────── */
+  ::-webkit-scrollbar {
+    width: 6px !important;
+    height: 6px !important;
+  }
+  ::-webkit-scrollbar-track { background: transparent !important; }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.06) !important;
+    border-radius: 999px !important;
+    border: none !important;
+    background-clip: initial !important;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(167,139,250,0.28) !important;
+  }
+
+  /* ── v4.16 Page 진입 애니메이션 ─────────────────────────────────── */
+  .page.active {
+    animation: v4-page-in 0.26s cubic-bezier(0.22, 1, 0.36, 1) both !important;
+  }
+  @keyframes v4-page-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── v4.17 Focus ring ──────────────────────────────────────────── */
+  *:focus-visible {
+    outline: none !important;
+    box-shadow:
+      0 0 0 2px rgba(167,139,250,0.14),
+      0 0 0 1px rgba(167,139,250,0.80) !important;
+    border-radius: var(--d-r-sm, 6px) !important;
+  }
+  button:focus-visible, a:focus-visible, input:focus-visible {
+    box-shadow:
+      0 0 0 3px rgba(167,139,250,0.16),
+      0 0 0 1px rgba(167,139,250,0.82) !important;
+  }
+
+  /* ── v4.18 Mini-interactions ────────────────────────────────────── */
+  /* Library cards */
+  .lib-card {
+    border-radius: 14px !important;
+    transition:
+      border-color var(--v4-t-sm) var(--v4-ease),
+      transform var(--v4-t-md) var(--v4-spring),
+      box-shadow var(--v4-t-md) var(--v4-ease) !important;
+  }
+  .lib-card:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 12px 36px -10px rgba(0,0,0,0.50) !important;
+  }
+
+  /* Play btn */
+  .play-btn {
+    transition:
+      background var(--v4-t-xs) var(--v4-ease),
+      color var(--v4-t-xs) var(--v4-ease),
+      transform var(--v4-t-sm) var(--v4-spring) !important;
+  }
+  .play-btn:hover {
+    transform: scale(1.08) !important;
+    background: var(--d-acc, #A78BFA) !important;
+    color: white !important;
+  }
+
+  /* Next-btn */
+  .next-btn {
+    border-radius: 14px !important;
+    background: rgba(139,92,246,0.08) !important;
+    border-color: rgba(139,92,246,0.22) !important;
+    transition: background var(--v4-t-sm), border-color var(--v4-t-sm), transform var(--v4-t-sm) var(--v4-spring) !important;
+  }
+  .next-btn:hover:not(:disabled) {
+    background: rgba(139,92,246,0.16) !important;
+    transform: translateX(3px) !important;
+  }
+
+  /* Icon btn topbar */
+  .icon-btn {
+    border-radius: 9px !important;
+    transition:
+      background var(--v4-t-xs),
+      color var(--v4-t-xs),
+      border-color var(--v4-t-xs),
+      transform var(--v4-t-sm) var(--v4-spring) !important;
+  }
+  .icon-btn:hover {
+    transform: translateY(-1px) !important;
+  }
+  .icon-btn:active {
+    transform: scale(0.92) !important;
+  }
+
+  /* ── v4.19 Segment + waveform ───────────────────────────────────── */
+  .segment { border-radius: 10px !important; }
+  .wave span { border-radius: 3px !important; }
+  .wave-big span { border-radius: 2px !important; }
+
+  /* ── v4.20 Range input ──────────────────────────────────────────── */
+  input[type=range]::-webkit-slider-thumb {
+    box-shadow: 0 0 0 3px rgba(139,92,246,0.20) !important;
+  }
+  input[type=range]::-webkit-slider-thumb:hover {
+    box-shadow: 0 0 0 5px rgba(139,92,246,0.28) !important;
+  }
+
+  /* ── v4.21 Section heading 패턴 ────────────────────────────────── */
+  .history-head h2 {
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.012em !important;
+  }
+  .section-title,
+  .summary-section h4 {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.07em !important;
+    text-transform: uppercase !important;
+  }
+
+  /* ── v4.22 Stage-actions 버튼 ───────────────────────────────────── */
+  .stage-actions button, .stage-actions a {
+    border-radius: 9px !important;
+    font-size: 12.5px !important;
+    border-color: var(--v4-line-1) !important;
+    transition: background var(--v4-t-xs), border-color var(--v4-t-xs), color var(--v4-t-xs) !important;
+  }
+  .stage-actions button:hover, .stage-actions a:hover {
+    background: rgba(255,255,255,0.055) !important;
+    border-color: var(--v4-line-2) !important;
+  }
+
+  /* ── v4.23 Waveform selection ───────────────────────────────────── */
+  .wave-selection {
+    border-radius: 5px !important;
+    box-shadow:
+      inset 0 0 28px rgba(139,92,246,0.28),
+      0 0 16px rgba(139,92,246,0.22) !important;
+  }
+
+  /* ── v4.24 File badge ───────────────────────────────────────────── */
+  .file-badge {
+    border-radius: 999px !important;
+    border-color: var(--v4-line-1) !important;
+    background: var(--v4-card-1) !important;
+  }
+
+  /* ── v4.25 모션 감소 ─────────────────────────────────────────────── */
+  @media (prefers-reduced-motion: reduce) {
+    .page.active { animation: none !important; }
+    .btn-generate, .btn-primary { transition-duration: 0.01ms !important; }
+    .nav-item .icon { transition: none !important; }
+  }
+
+  /* ── v4.26 Mobile refinements ───────────────────────────────────── */
+  @media (max-width: 768px) {
+    .page-head h1 { font-size: 26px !important; }
+    .btn-generate  { height: var(--v4-btn-lg, 46px) !important; font-size: 14px !important; }
+  }
+  @media (max-width: 480px) {
+    .page-head h1 { font-size: 22px !important; }
+    .btn-generate  { height: 44px !important; font-size: 13.5px !important; }
+  }
   </style>
 </head>
 <body>
