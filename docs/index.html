@@ -44901,8 +44901,8 @@ async function renderCharactersPage() {
             </div>
             <div class="ch-card-topline">
               <span class="ch-pill ${ready.ready ? 'ready' : 'warn'}">${ready.ready ? 'Ready' : 'Need ' + ready.missing.length}</span>
-              ${ready.hasPhoto ? '<span class="ch-pill ready">사진 있음</span>' : '<span class="ch-pill warn">No photo</span>'}
-              ${ready.hasVoice ? '<span class="ch-pill ready">보이스 있음</span>' : '<span class="ch-pill muted">No voice</span>'}
+              ${ready.hasPhoto ? '<span class="ch-pill ready">사진 있음</span>' : ''}
+              ${ready.hasVoice ? '<span class="ch-pill ready">보이스 있음</span>' : ''}
               ${c.keyImageUrl ? '<span class="ch-pill keyimage-done">키이미지 ✓</span>' : ''}
             </div>
             ${(() => {
@@ -45899,7 +45899,7 @@ function getCharacterVisualBadges(c = {}) {
   if (hasKeyImg) {
     badges.push({ label: 'Key Image Ready', tone: 'ready' });
   } else if (!hasVisRef) {
-    badges.push({ label: 'No Image', tone: 'warn' });
+    // No Image 배지 숨김
   }
   if (c.avatarUrl || c.mainImageUrl) badges.push({ label: 'Avatar Set', tone: 'ready' });
   const refs = [
