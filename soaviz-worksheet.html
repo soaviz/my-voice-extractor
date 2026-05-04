@@ -4883,6 +4883,23 @@
 <script>
 /* ==================== DATA ==================== */
 const DAYS_DATA = [
+  // ---------- P0 정리 작업 (soaviz-studio.html, 2026-05-04 완료) ----------
+  {
+    day: 0, week: 0, weekday: '사전', theme: '✅ P0 정리 — soaviz-studio.html 출시 전 클린업',
+    goal: '✅ 완료 — 사이드바 정리 + admin dev-only + "준비 중" 매핑',
+    blocks: [
+      {
+        id: '0A', title: 'Block A · P0 클린업 (soaviz-studio.html)', time: '2026-05-04',
+        items: [
+          { text: 'C-P0-01 · shots 사이드바 항목 확인 — 이미 없음 (skip)' },
+          { text: 'C-P0-03 · project-archive nav-item 삭제 (apply_p0.py 적용 완료)' },
+          { text: 'C-P0-04 · history 사이드바 항목 확인 — 이미 없음 (skip)' },
+          { text: 'C-P0-05 · admin 메뉴 ?dev=1 조건부 노출 적용 (js-dev-only 가드 주입)' },
+          { text: 'C-P0-08 · "준비 중" 10곳 자동 분류 매핑표 생성 (KEEP 6 / IMPLEMENT 3 / REVIEW 1)' },
+        ],
+      },
+    ],
+  },
   // ---------- WEEK 1 · 토대 재정립 ----------
   {
     day: 1, week: 1, weekday: '월', theme: '부트스트랩 + 영상 제작 DB 스키마 ✅',
@@ -8712,6 +8729,24 @@ load();
   state.checks = { ...completed, ...state.checks };
   save();
   localStorage.setItem(PREFILL_KEY, '1');
+})();
+// ─────────────────────────────────────────────────────────────────────────
+
+// ── P0 정리 작업 완료 체크 (Claude Cowork, 2026-05-04) ─────────────────────
+(function applyP0CompletedChecks() {
+  const P0_KEY = 'soaviz-worksheet-p0-prefill-v1';
+  if (localStorage.getItem(P0_KEY)) return;
+  const p0Done = {
+    // Day 0 · Block A — P0 정리 (soaviz-studio.html)
+    '0A-0': true,  // C-P0-01: shots 사이드바 항목 — 이미 없음 확인
+    '0A-1': true,  // C-P0-03: project-archive nav-item 삭제
+    '0A-2': true,  // C-P0-04: history 사이드바 항목 — 이미 없음 확인
+    '0A-3': true,  // C-P0-05: admin 메뉴 ?dev=1 조건부 노출 적용
+    '0A-4': true,  // C-P0-08: "준비 중" 10곳 분류 매핑표 생성
+  };
+  state.checks = { ...p0Done, ...state.checks };
+  save();
+  localStorage.setItem(P0_KEY, '1');
 })();
 // ─────────────────────────────────────────────────────────────────────────
 
