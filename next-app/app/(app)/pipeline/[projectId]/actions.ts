@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { nanoid } from 'nanoid'
+import type { UpdateTables } from '@/types/database'
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -123,4 +124,62 @@ export async function createScene(projectId: string, episodeId: string) {
   if (error) return { error: error.message }
   revalidatePath(`/pipeline/${projectId}`)
   return { scene: data }
+}
+
+// ─── shots ────────────────────────────────────────────────────────────────────
+
+export async function getShots(sceneId: string) {
+  const { supabase, user } = await requireUser()
+  const { data } = await supabase
+    .from('shots')
+    .select('*')
+    .eq('scene_id', sceneId)
+    .eq('user_id', user.id)
+    .eq('archived', false)
+    .order('number', { ascending: true })
+  return data ?? []
+}
+
+export async function createShot(projectId: string, sceneId: string) {
+  const { supabase, user } = await requireUser()
+
+  const { count } = await supabase
+    .from('shots')
+    .select('id', { count: 'exact', head: true })
+    .eq('scene_id', sceneId)
+    .eq('archived', false)
+
+  const nextNumber = (count ?? 0) + 1
+
+  const { data, error } = await supabase
+    .from('shots')
+    .insert({
+      id: nanoid(),
+      user_id: user.id,
+      project_id: projectId,
+      scene_id: sceneId,
+      number: nextNumber,
+      shot_type: 'MS',
+      status: 'draft',
+    })
+    .select()
+    .single()
+
+  if (error) return { error: error.message }
+  revalidatePath(`/pipeline/${projectId}`)
+  return { shot: data }
+}
+
+export async function updateShotField(
+  shotId: string,
+  fields: UpdateTables<'shots'>,
+  projectId: string,
+) {
+  const { supabase, user } = await requireUser()
+  await supabase
+    .from('shots')
+    .update(fields)
+    .eq('id', shotId)
+    .eq('user_id', user.id)
+  revalidatePath(`/pipeline/${projectId}`)
 }
