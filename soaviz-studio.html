@@ -46498,7 +46498,28 @@ function getCharacterAvatarUrl(c = {}) {
 function openCharacterKeyImageStudio(id) {
   CHARACTER_PAGE_STATE.activeCharacterId = id;
   CHARACTER_PAGE_STATE.returnScrollY = window.scrollY || 0;
-  if (typeof showPage === 'function') showPage('keyimage-studio');
+  // 1) 페이지 전환 — hookPipelineRoute 의존 없이 DOM 직접 처리 (가장 안정적)
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const _sp = document.getElementById('page-keyimage-studio');
+  if (_sp) {
+    _sp.classList.add('active');
+    window.currentPage = 'keyimage-studio';
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }
+  try {
+    document.querySelectorAll('.nav-item[data-page], .bn-item[data-page]').forEach(el => {
+      el.classList.toggle('active', el.dataset.page === 'characters');
+    });
+    window._pageHistory = window._pageHistory || [];
+    if (window._pageHistory[window._pageHistory.length - 1] !== 'keyimage-studio') {
+      window._pageHistory.push('keyimage-studio');
+    }
+  } catch (_) {}
+  // 2) 렌더 — 직접 호출 + 에러 표면화
+  renderKeyImageStudioPage().catch(e => {
+    console.error('[KIStudio] render 실패:', e);
+    showToast?.('키이미지 스튜디오 오류: ' + (e?.message || String(e)), 'error');
+  });
 }
 function closeCharacterKeyImageStudio() {
   CHARACTER_PAGE_STATE.activeCharacterId = null;
@@ -48244,7 +48265,7 @@ async function renderKeyImageStudioPage() {
     return;
   }
 
-  resetCharacterKeyImageStudioState(charId);
+  resetCharacterKeyImageStudioState(c.id);
   const s = window.CharacterKeyImageStudio;
   if (!s.promptText) s.promptText = buildCharacterKeyImagePrompt(c);
   if (!s.negativePrompt) s.negativePrompt = buildCharacterKeyImageNegativePrompt();
@@ -55852,7 +55873,7 @@ window.svErrorBoundary = function (renderFn, containerId) {
       const resolved = (typeof resolvePageName === 'function') ? resolvePageName(name) : name;
       if (resolved === 'pipeline') renderPipelinePage();
       else if (resolved === 'characters') renderCharactersPage();
-      else if (resolved === 'keyimage-studio') renderKeyImageStudioPage();
+      else if (resolved === 'keyimage-studio') renderKeyImageStudioPage().catch(e => console.error('[KIStudio]', e));
       else if (resolved === 'styles') renderStylesPage();
       else if (resolved === 'compare') renderComparePage();
       else if (resolved === 'cinema') renderCinemaPage();
