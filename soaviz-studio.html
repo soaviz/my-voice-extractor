@@ -12483,50 +12483,60 @@
       background: rgba(255,255,255,0.025);
       font-variant-numeric: tabular-nums;
     }
+    /* ── Projects 카드 그리드 (P1-01 업그레이드) ──────────────── */
     .projects-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 14px;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
     }
     .project-card {
       display: flex;
       flex-direction: column;
-      gap: 14px;
-      min-height: 260px;
-      padding: 16px;
-      background: linear-gradient(145deg, rgba(255,255,255,0.035), var(--bg-card));
+      background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.14);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.14);
+      transition: transform 160ms ease, box-shadow 160ms ease;
     }
-    .project-card.archived {
-      opacity: 0.78;
-      border-style: dashed;
+    .project-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 36px rgba(0,0,0,0.24);
     }
-    .project-card-head {
-      display: grid;
-      grid-template-columns: 42px 1fr auto;
-      gap: 12px;
-      align-items: start;
+    .project-card.archived { opacity: 0.72; }
+    .project-card.archived .project-card-banner {
+      filter: saturate(0.5) brightness(0.8);
+    }
+    /* 컬러 배너 */
+    .project-card-banner {
+      height: 56px;
+      background: linear-gradient(130deg, var(--project-color, #A78BFA) 0%, rgba(0,0,0,0.6) 120%);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 14px;
+      position: relative;
+      flex-shrink: 0;
     }
     .project-mark {
-      width: 42px;
-      height: 42px;
+      width: 36px;
+      height: 36px;
       border-radius: 8px;
       display: grid;
       place-items: center;
       color: white;
       font-weight: 900;
-      font-size: 22px;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18);
-      background: linear-gradient(135deg, var(--project-color, #a78bfa), rgba(99,102,241,0.9));
+      font-size: 20px;
+      background: rgba(255,255,255,0.18);
+      border: 1px solid rgba(255,255,255,0.25);
       cursor: pointer;
-      transition: transform 200ms, box-shadow 200ms;
+      transition: transform 200ms, background 200ms;
       position: relative;
+      flex-shrink: 0;
     }
     .project-mark:hover {
-      transform: scale(1.08);
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.28), 0 6px 16px -6px rgba(167,139,250,0.55);
+      transform: scale(1.1);
+      background: rgba(255,255,255,0.28);
     }
     .project-mark::after {
       content: '✏';
@@ -12534,15 +12544,155 @@
       top: -4px; right: -4px;
       width: 16px; height: 16px;
       border-radius: 50%;
-      background: var(--accent, #A78BFA);
+      background: rgba(0,0,0,0.55);
       color: #fff;
       font-size: 9px;
       display: grid; place-items: center;
       opacity: 0;
       transition: opacity 200ms;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
     }
     .project-mark:hover::after { opacity: 1; }
+    .project-banner-title {
+      flex: 1;
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.96);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+    }
+    .project-banner-status {
+      padding: 3px 8px;
+      background: rgba(255,255,255,0.18);
+      border: 1px solid rgba(255,255,255,0.22);
+      border-radius: 999px;
+      font-size: 9px;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.92);
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    /* 카드 본문 */
+    .project-card-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+      padding: 14px;
+    }
+    .project-card-head { display: none; } /* 배너로 대체됨 */
+    .project-title { display: none; }
+    .project-status { display: none; }
+    .project-meta {
+      margin: 0;
+      color: var(--text-faint);
+      font-size: 11px;
+      line-height: 1.45;
+    }
+    .project-logline {
+      color: var(--text-dim);
+      font-size: 12.5px;
+      line-height: 1.55;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      min-height: 38px;
+    }
+    /* 샷 진행률 바 */
+    .project-progress-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .project-progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--text-faint);
+    }
+    .project-progress-bar {
+      height: 4px;
+      background: rgba(255,255,255,0.07);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .project-progress-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--project-color, #A78BFA), rgba(255,255,255,0.6));
+      min-width: 4px;
+      transition: width 600ms ease;
+    }
+    /* 스탯 pill 행 */
+    .project-stat-row {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+    .project-stat-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 3px 8px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 10.5px;
+      color: var(--text-faint);
+      white-space: nowrap;
+    }
+    .project-stat-pill strong {
+      color: var(--text);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+    /* 액션 버튼 행 */
+    .project-actions {
+      display: flex;
+      gap: 7px;
+      margin-top: auto;
+      position: relative;
+    }
+    /* 오버플로우 드롭다운 */
+    .project-overflow-menu {
+      position: absolute;
+      bottom: calc(100% + 6px);
+      right: 0;
+      background: var(--bg-elev, #18181f);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 4px;
+      min-width: 160px;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.50);
+      z-index: 60;
+      animation: pipFade 150ms ease;
+    }
+    .project-overflow-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      color: var(--text);
+      cursor: pointer;
+      background: none;
+      border: none;
+      width: 100%;
+      text-align: left;
+      transition: background 120ms;
+    }
+    .project-overflow-item:hover { background: rgba(255,255,255,0.07); }
+    .project-overflow-item.danger { color: #f87171; }
+    .project-overflow-item.danger:hover { background: rgba(248,113,113,0.10); }
+    /* 구 stat-grid — 숨김 */
+    .project-stat-grid { display: none; }
+    .project-stat { display: none; }
 
     /* 이모지 선택 팝오버 — 아이폰 스타일 (블랙 배경 / 5x5 그리드 / 스크롤) */
     .project-icon-pop {
@@ -29577,41 +29727,81 @@ async function renderProjectsPage() {
       const meta = [
         p.format || goal?.projectType || 'series',
         deadline ? `마감 ${deadline}` : '',
-        updated ? `업데이트 ${updated}` : '',
+        updated ? `${updated}` : '',
       ].filter(Boolean).join(' · ');
       const logline = p.logline || goal?.memo || '세계관, 씬, 프롬프트, 결과물을 이 프로젝트 아래에 묶어 제작 흐름을 시작하세요.';
       const _projMark = p.icon ? p.icon : escapeHTML(initials);
+      const projColor = _projectPageColor(p.color);
+
+      // 진행률: assets / max(shots*1,1) — 샷당 에셋 비율
+      const shotTotal = s.shots;
+      const assetCount = s.assets;
+      const pct = shotTotal > 0 ? Math.min(100, Math.round(assetCount / shotTotal * 100)) : 0;
+      const progressLabel = shotTotal > 0
+        ? `에셋 ${assetCount} / 샷 ${shotTotal} (${pct}%)`
+        : '샷 없음';
+
+      // stat pills (0이면 희미하게)
+      const pill = (val, label) => val > 0
+        ? `<span class="project-stat-pill"><strong>${val}</strong>${label}</span>`
+        : `<span class="project-stat-pill" style="opacity:.4"><strong>0</strong>${label}</span>`;
+
+      // 오버플로우 메뉴 HTML
+      const overflowItems = p.archived ? `
+        <button class="project-overflow-item" data-project-action="characters" data-project-id="${escapeHTML(p.id)}">👤 캐릭터</button>
+        <button class="project-overflow-item" data-project-action="styles" data-project-id="${escapeHTML(p.id)}">🎨 스타일</button>
+        <button class="project-overflow-item" data-project-action="prompts" data-project-id="${escapeHTML(p.id)}">✨ 프롬프트</button>
+        <button class="project-overflow-item" data-project-action="export" data-project-id="${escapeHTML(p.id)}">📦 Export</button>
+        <hr style="border:none;border-top:1px solid var(--border);margin:4px 0">
+        <button class="project-overflow-item danger" data-project-action="delete" data-project-id="${escapeHTML(p.id)}">🗑 영구 삭제</button>
+      ` : `
+        <button class="project-overflow-item" data-project-action="characters" data-project-id="${escapeHTML(p.id)}">👤 캐릭터</button>
+        <button class="project-overflow-item" data-project-action="styles" data-project-id="${escapeHTML(p.id)}">🎨 스타일</button>
+        <button class="project-overflow-item" data-project-action="prompts" data-project-id="${escapeHTML(p.id)}">✨ 프롬프트</button>
+        <button class="project-overflow-item" data-project-action="export" data-project-id="${escapeHTML(p.id)}">📦 Export</button>
+        <hr style="border:none;border-top:1px solid var(--border);margin:4px 0">
+        <button class="project-overflow-item" data-project-action="archive" data-project-id="${escapeHTML(p.id)}">📁 보관</button>
+      `;
+
       return `
-        <article class="project-card ${p.archived ? 'archived' : ''}" data-project-id="${escapeHTML(p.id)}" style="--project-color:${_projectPageColor(p.color)}">
-          <div class="project-card-head">
-            <div class="project-mark" data-project-action="pick-icon" data-project-id="${escapeHTML(p.id)}" title="아이콘 변경 — 클릭">${_projMark}</div>
-            <div>
-              <h3 class="project-title">${escapeHTML(p.title || '프로젝트')}</h3>
-              <div class="project-meta">${escapeHTML(meta || '작품 프로젝트')}</div>
+        <article class="project-card ${p.archived ? 'archived' : ''}" data-project-id="${escapeHTML(p.id)}" style="--project-color:${projColor}">
+          <!-- 컬러 배너 -->
+          <div class="project-card-banner">
+            <div class="project-mark" data-project-action="pick-icon" data-project-id="${escapeHTML(p.id)}" title="아이콘 변경">${_projMark}</div>
+            <span class="project-banner-title">${escapeHTML(p.title || '프로젝트')}</span>
+            <span class="project-banner-status">${p.archived ? 'Archived' : 'Active'}</span>
+          </div>
+          <!-- 본문 -->
+          <div class="project-card-body">
+            <div class="project-meta">${escapeHTML(meta || '작품 프로젝트')}</div>
+            <div class="project-logline">${escapeHTML(logline)}</div>
+            <!-- 진행률 바 -->
+            <div class="project-progress-wrap">
+              <div class="project-progress-label">
+                <span>제작 진행률</span>
+                <span>${escapeHTML(progressLabel)}</span>
+              </div>
+              <div class="project-progress-bar">
+                <div class="project-progress-fill" style="width:${pct}%"></div>
+              </div>
             </div>
-            <span class="project-status">${p.archived ? 'Archived' : 'Active'}</span>
-          </div>
-          <div class="project-logline">${escapeHTML(logline)}</div>
-          <div class="project-stat-grid">
-            <div class="project-stat"><strong>${s.episodes}</strong>Episode</div>
-            <div class="project-stat"><strong>${s.scenes}</strong>Scene</div>
-            <div class="project-stat"><strong>${s.shots}</strong>Shot</div>
-            <div class="project-stat"><strong>${s.characters}</strong>Characters</div>
-            <div class="project-stat"><strong>${s.prompts}</strong>Prompts</div>
-            <div class="project-stat"><strong>${s.assets}</strong>Assets</div>
-          </div>
-          <div class="project-actions">
-            ${p.archived
-              ? `<button class="project-btn primary" data-project-action="restore">복원</button>`
-              : `<button class="project-btn primary" data-project-action="open">Pipeline 열기</button>`}
-            <button class="project-btn" data-project-action="edit">편집</button>
-            <button class="project-btn" data-project-action="characters">캐릭터</button>
-            <button class="project-btn" data-project-action="styles">스타일</button>
-            <button class="project-btn" data-project-action="prompts">프롬프트</button>
-            <button class="project-btn" data-project-action="export">Export</button>
-            ${p.archived
-              ? `<button class="project-btn danger" data-project-action="delete">영구 삭제</button>`
-              : `<button class="project-btn ghost" data-project-action="archive">보관</button>`}
+            <!-- 스탯 pill 행 -->
+            <div class="project-stat-row">
+              ${pill(s.episodes,'Ep')}
+              ${pill(s.scenes,'Scene')}
+              ${pill(s.shots,'Shot')}
+              ${pill(s.characters,'Character')}
+              ${pill(s.assets,'Asset')}
+            </div>
+            <!-- 액션 버튼 -->
+            <div class="project-actions">
+              ${p.archived
+                ? `<button class="project-btn primary" data-project-action="restore" data-project-id="${escapeHTML(p.id)}">복원</button>`
+                : `<button class="project-btn primary" data-project-action="open" data-project-id="${escapeHTML(p.id)}">Pipeline 열기</button>`}
+              <button class="project-btn" data-project-action="edit" data-project-id="${escapeHTML(p.id)}">편집</button>
+              <button class="project-btn" data-project-action="overflow" data-project-id="${escapeHTML(p.id)}" style="margin-left:auto;padding:0 10px;font-size:18px;letter-spacing:2px" title="더 보기">⋯</button>
+              <div class="project-overflow-menu" style="display:none">${overflowItems}</div>
+            </div>
           </div>
         </article>
       `;
@@ -29861,6 +30051,10 @@ function bindProjectsPage() {
     const card = btn.closest('[data-project-id]');
     const projectId = card?.dataset.projectId;
     if (!projectId) return;
+    // 오버플로우가 아닌 액션이면 열린 메뉴 모두 닫기
+    if (action !== 'overflow') {
+      document.querySelectorAll('.project-overflow-menu').forEach(m => { m.style.display = 'none'; });
+    }
     await SoavizDB?.ready;
     const project = (await SoavizDB.db.projects.get(projectId)) || { id: projectId, ..._projectPageGoal(projectId) };
     if (action === 'open') _projectPageOpen('pipeline', project);
@@ -29876,7 +30070,20 @@ function bindProjectsPage() {
       e.stopPropagation();
       _openProjectIconPopover(btn, projectId, project.icon || '');
     }
+    else if (action === 'overflow') {
+      e.stopPropagation();
+      const menu = card.querySelector('.project-overflow-menu');
+      if (!menu) return;
+      document.querySelectorAll('.project-overflow-menu').forEach(m => {
+        if (m !== menu) m.style.display = 'none';
+      });
+      menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+    }
   });
+  // 오버플로우 메뉴 — 외부 클릭 시 닫기 (capture phase)
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.project-overflow-menu').forEach(m => { m.style.display = 'none'; });
+  }, true);
   renderProjectsPage();
 }
 
