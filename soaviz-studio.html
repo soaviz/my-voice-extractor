@@ -48393,11 +48393,34 @@ async function renderKeyImageStudioPage() {
     } catch (_) {}
   }
   if (!c) {
-    mount.innerHTML = `<div style="padding:60px;text-align:center;color:var(--text-faint)">
-      <div style="font-size:32px;margin-bottom:12px">🎭</div>
-      <div style="font-size:15px;margin-bottom:16px">캐릭터가 없어요.<br>캐릭터를 먼저 추가해 주세요.</div>
-      <button onclick="showPage('characters')" style="padding:8px 20px;border-radius:8px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:14px">캐릭터 페이지로</button>
-    </div>`;
+    mount.innerHTML = `
+      <div class="ck3-page-head" style="border-bottom:none;">
+        <div style="display:flex;align-items:flex-start;gap:12px;">
+          <button class="ck-back-btn" onclick="closeCharacterKeyImageStudio()" style="margin-top:4px;flex-shrink:0;">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <div class="ck3-title-block">
+            <span class="ck3-kicker">SOAVIZ</span>
+            <div class="ck3-h1">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2L9.6 9.6 2 12l7.6 2.4L12 22l2.4-7.6L22 12l-7.6-2.4z"/></svg>
+              키이미지 제작기
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;gap:16px;color:var(--text-faint)">
+        <div style="width:64px;height:64px;border-radius:16px;background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.2);display:flex;align-items:center;justify-content:center;">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div>
+          <div style="font-size:17px;font-weight:800;color:var(--text);margin-bottom:6px">아직 캐릭터가 없어요</div>
+          <div style="font-size:13px;line-height:1.6">캐릭터를 먼저 만들면<br>키이미지 제작기를 바로 사용할 수 있어요.</div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:4px;">
+          <button onclick="closeCharacterKeyImageStudio()" style="padding:10px 20px;border-radius:10px;background:rgba(255,255,255,0.07);border:1px solid var(--border);color:var(--text-dim);font-size:13px;font-weight:600;cursor:pointer;">돌아가기</button>
+          <button onclick="closeCharacterKeyImageStudio();openCharacterEditor(null)" style="padding:10px 20px;border-radius:10px;background:var(--accent);border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;">+ 새 캐릭터 만들기</button>
+        </div>
+      </div>`;
     return;
   }
 
@@ -50440,11 +50463,8 @@ function bindCharactersPage() {
       } catch (_) {}
     }
 
-    if (!charId) {
-      showToast?.('캐릭터를 먼저 추가해 주세요', 'warn');
-      return;
-    }
-    openCharacterKeyImageStudio(charId);
+    // charId가 없어도 스튜디오로 진입 — 내부에서 캐릭터 없음 UI 처리
+    openCharacterKeyImageStudio(charId || null);
   });
   $('#ch-sheet-btn')?.addEventListener('click', () => openCharacterEditor(null, null, 'sheet'));
   $('#ch-project-select')?.addEventListener('change', () => renderCharactersPage());
