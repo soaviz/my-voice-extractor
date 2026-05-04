@@ -61886,5 +61886,93 @@ window.handleMobileReviewShareUrl = handleMobileReviewShareUrl;
   }
 })();
 </script>
+
+<script>
+/* P1-01: projects seed auto-import */
+(async function() {
+  const KEY = 'soaviz-db-projects-seed-v1';
+  if (localStorage.getItem(KEY)) {
+    console.log('[P1-01] 프로젝트 시드 이미 등록됨 — skip');
+    return;
+  }
+
+  const SEED = [
+    {
+      id: 'proj_oramu_main',
+      title: 'ORA-MU: 빈 페이지의 빛',
+      logline: "AI 시대 2050년, 한 영상 감독이 '완벽한 코드와 불완전한 감정' 사이에서 자신의 작품 세계를 재정의하는 디스토피아 SF",
+      format: '단편영화',
+      genre: 'SF / 드라마',
+      deadline: '2026-09-30',
+      tags: ['sci-fi', 'dystopia', 'AI', 'korean-aesthetic', 'ORA-MU'],
+      color: '#9e7bff',
+      icon: '🎬',
+      description: 'Hongik University AI Museum 전시작 + WAIFF Seoul 2026 출품 예정. 은교 본인이 감독·제작.',
+      scope: 'main',
+      archived: false,
+    },
+    {
+      id: 'proj_cheonsangyuram',
+      title: '천상유람 (天上遊覽)',
+      logline: '한국 전통 풍경화의 시선으로 그려낸 디지털 시대의 산수 — AI Film Showcase 2026 출품작',
+      format: '뮤직비디오',
+      genre: '음악 / 동양화',
+      deadline: '2026-06-15',
+      tags: ['minhwa', 'music-video', 'korean-traditional', 'AI-Film-Showcase-2026'],
+      color: '#4cc9f0',
+      icon: '🎵',
+      description: '전통 풍경화 + AI 영상의 융합. SOAVIZ AI STUDIO 대표작.',
+      scope: 'main',
+      archived: false,
+    },
+    {
+      id: 'proj_venux_aleka',
+      title: 'VenuX (ALEKA 시스템)',
+      logline: '5명의 AI 가상 인플루언서가 fire/light/water/wind/nature 5속성으로 K-beauty/패션/테크/여행/웰니스 콘텐츠를 만드는 그룹',
+      format: '가상 인플루언서 그룹',
+      genre: '콘텐츠 IP / 마케팅',
+      deadline: '2026-12-31',
+      tags: ['VenuX', 'ALEKA', 'virtual-influencer', 'K-beauty', '5-elements'],
+      color: '#f43f5e',
+      icon: '✨',
+      description: 'ARA-462(이루나)/LUX-299(박리라)/EUR-0K(신지우)/KIN-360(최노아)/ATP-X1(정아온) 5인 시스템. BEAUTYVERSE 플랫폼 핵심 IP.',
+      scope: 'main',
+      archived: false,
+    },
+  ];
+
+  // db 준비 대기
+  let retries = 0;
+  while (typeof db === 'undefined' || !db.projects) {
+    if (retries++ > 20) { console.error('[P1-01] db 초기화 타임아웃'); return; }
+    await new Promise(r => setTimeout(r, 200));
+  }
+
+  // 멱등성: 이미 존재하는 id 제외
+  const now = new Date().toISOString();
+  const toAdd = [];
+  for (const item of SEED) {
+    const exists = await db.projects.get(item.id);
+    if (!exists) {
+      toAdd.push({ ...item, createdAt: now, updatedAt: now, status: 'active' });
+    }
+  }
+
+  if (toAdd.length === 0) {
+    console.log('[P1-01] 모든 프로젝트 이미 존재 — skip');
+    localStorage.setItem(KEY, '1');
+    return;
+  }
+
+  try {
+    await db.projects.bulkAdd(toAdd);
+    console.log('[P1-01] ✅ ' + toAdd.length + '개 프로젝트 시드 import 완료');
+    localStorage.setItem(KEY, '1');
+    if (typeof renderProjectsPage === 'function') renderProjectsPage();
+  } catch (e) {
+    console.error('[P1-01] 프로젝트 시드 import 실패:', e);
+  }
+})();
+</script>
 </body>
 </html>
