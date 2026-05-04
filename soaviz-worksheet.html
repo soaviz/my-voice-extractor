@@ -4898,6 +4898,15 @@ const DAYS_DATA = [
           { text: 'C-P0-08 · "준비 중" 10곳 자동 분류 매핑표 생성 (KEEP 6 / IMPLEMENT 3 / REVIEW 1)' },
         ],
       },
+      {
+        id: '0B', title: 'Block B · P1 시드 + UI 업그레이드 (soaviz-studio.html)', time: '2026-05-05',
+        items: [
+          { text: 'C-P1-04 · styles 오방색·민화 6종 시드 등록 (HTML 주입, 방식 B 완료)' },
+          { text: 'C-P1-01 · projects 카드 그리드 — 컬러 배너·진행바·stat pill·overflow 메뉴 (완료)' },
+          { text: 'C-P1-02 · characters 페이지 VenuX 5인 시드 등록 (HTML 주입, 방식 B 완료)' },
+          { text: 'C-P1-03 · VenuX 5인 시드 데이터 — ARA-462/LUX-299/EUR-0K/KIN-360/ATP-X1 (완료)' },
+        ],
+      },
     ],
   },
   // ---------- WEEK 1 · 토대 재정립 ----------
@@ -8747,6 +8756,22 @@ load();
   state.checks = { ...p0Done, ...state.checks };
   save();
   localStorage.setItem(P0_KEY, '1');
+})();
+
+// ── P1 시드 + UI 업그레이드 완료 체크 (Claude Cowork, 2026-05-05) ───────────
+(function applyP1CompletedChecks() {
+  const P1_KEY = 'soaviz-worksheet-p1-prefill-v1';
+  if (localStorage.getItem(P1_KEY)) return;
+  const p1Done = {
+    // Day 0 · Block B — P1 시드 + UI (soaviz-studio.html)
+    '0B-0': true,  // C-P1-04: styles 오방색·민화 6종 시드 등록
+    '0B-1': true,  // C-P1-01: projects 카드 그리드 업그레이드
+    '0B-2': true,  // C-P1-02: characters VenuX 5인 시드 등록
+    '0B-3': true,  // C-P1-03: VenuX 5인 시드 데이터 입력
+  };
+  state.checks = { ...p1Done, ...state.checks };
+  save();
+  localStorage.setItem(P1_KEY, '1');
 })();
 // ─────────────────────────────────────────────────────────────────────────
 
