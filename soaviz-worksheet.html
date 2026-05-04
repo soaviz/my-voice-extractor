@@ -8773,6 +8773,39 @@ load();
   save();
   localStorage.setItem(P1_KEY, '1');
 })();
+
+// ── next-app Day 1~3 완료 체크 (Claude Cowork, 2026-05-05) ─────────────────
+(function applyDays1to3CompletedChecks() {
+  const KEY = 'soaviz-worksheet-days1to3-prefill-v1';
+  if (localStorage.getItem(KEY)) return;
+  const done = {
+    // ── Day 1 · Block A — 아키텍처 문서 (전체 ✅)
+    '1A-0': true, '1A-1': true, '1A-2': true, '1A-3': true,
+    // ── Day 1 · Block B — Next.js 부트스트랩 (전체 ✅)
+    '1B-0': true, '1B-1': true, '1B-2': true, '1B-3': true,
+    // ── Day 1 · Block C — Supabase 연결 + 테이블 (전체 ✅)
+    '1C-0': true, '1C-1': true, '1C-2': true, '1C-3': true,
+    // ── Day 1 · Block D — 검증 (전체 ✅)
+    '1D-0': true, '1D-1': true, '1D-2': true,
+    // ── Day 2 · Block A — 인증 플로우 (전체 ✅, Task #110)
+    '2A-0': true, '2A-1': true, '2A-2': true,
+    // ── Day 2 · Block B — App Shell 기초 (전체 ✅, Task #113,#114)
+    '2B-0': true, '2B-1': true, '2B-2': true,
+    // ── Day 2 · Block C — 미들웨어 + 기초 라우트 (전체 ✅, Task #114)
+    '2C-0': true, '2C-1': true, '2C-2': true,
+    // ── Day 2 · Block D — 배포 확인 (전체 ✅)
+    '2D-0': true, '2D-1': true, '2D-2': true,
+    // ── Day 3 · Block A — 사이드바 재설계 (전체 완료, Task #119)
+    '3A-0': true, '3A-1': true, '3A-2': true, '3A-3': true, '3A-4': true, '3A-5': true,
+    // ── Day 3 · Block B — Pipeline DB 스키마 (전체 완료, Task #121)
+    '3B-0': true, '3B-1': true, '3B-2': true, '3B-3': true, '3B-4': true, '3B-5': true,
+    // ── Day 3 · Block D — personas 제거 + 배포 (전체 완료, Task #120)
+    '3D-0': true, '3D-1': true, '3D-2': true, '3D-3': true,
+  };
+  state.checks = { ...done, ...state.checks };
+  save();
+  localStorage.setItem(KEY, '1');
+})();
 // ─────────────────────────────────────────────────────────────────────────
 
 // 사용자 정의 타이머 라벨 적용 (Block A 라벨 동기화)
